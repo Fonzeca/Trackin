@@ -1,0 +1,11 @@
+version: "3.9"
+services:
+  trackin:
+    build: .
+    env_file:
+      - .env
+    container_name: trackin
+    ports:
+      - "5896:5896"
+    networks:
+      - carmind
