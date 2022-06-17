@@ -29,9 +29,16 @@ func newLog(db *gorm.DB) log {
 	_log.ALL = field.NewField(tableName, "*")
 	_log.ID = field.NewInt32(tableName, "id")
 	_log.Imei = field.NewString(tableName, "imei")
+	_log.ProtocolType = field.NewInt32(tableName, "protocol_type")
 	_log.Latitud = field.NewFloat64(tableName, "latitud")
 	_log.Longitud = field.NewFloat64(tableName, "longitud")
 	_log.Date = field.NewTime(tableName, "date")
+	_log.Speed = field.NewFloat32(tableName, "speed")
+	_log.DeviceTemp = field.NewInt32(tableName, "device_temp")
+	_log.Mileage = field.NewInt32(tableName, "mileage")
+	_log.IsGps = field.NewBool(tableName, "is_gps")
+	_log.IsHistory = field.NewBool(tableName, "is_history")
+	_log.EngineStatus = field.NewBool(tableName, "engine_status")
 
 	_log.fillFieldMap()
 
@@ -41,12 +48,19 @@ func newLog(db *gorm.DB) log {
 type log struct {
 	logDo
 
-	ALL      field.Field
-	ID       field.Int32
-	Imei     field.String
-	Latitud  field.Float64
-	Longitud field.Float64
-	Date     field.Time
+	ALL          field.Field
+	ID           field.Int32
+	Imei         field.String
+	ProtocolType field.Int32
+	Latitud      field.Float64
+	Longitud     field.Float64
+	Date         field.Time
+	Speed        field.Float32
+	DeviceTemp   field.Int32
+	Mileage      field.Int32
+	IsGps        field.Bool
+	IsHistory    field.Bool
+	EngineStatus field.Bool
 
 	fieldMap map[string]field.Expr
 }
@@ -65,9 +79,16 @@ func (l *log) updateTableName(table string) *log {
 	l.ALL = field.NewField(table, "*")
 	l.ID = field.NewInt32(table, "id")
 	l.Imei = field.NewString(table, "imei")
+	l.ProtocolType = field.NewInt32(table, "protocol_type")
 	l.Latitud = field.NewFloat64(table, "latitud")
 	l.Longitud = field.NewFloat64(table, "longitud")
 	l.Date = field.NewTime(table, "date")
+	l.Speed = field.NewFloat32(table, "speed")
+	l.DeviceTemp = field.NewInt32(table, "device_temp")
+	l.Mileage = field.NewInt32(table, "mileage")
+	l.IsGps = field.NewBool(table, "is_gps")
+	l.IsHistory = field.NewBool(table, "is_history")
+	l.EngineStatus = field.NewBool(table, "engine_status")
 
 	l.fillFieldMap()
 
@@ -84,12 +105,19 @@ func (l *log) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (l *log) fillFieldMap() {
-	l.fieldMap = make(map[string]field.Expr, 5)
+	l.fieldMap = make(map[string]field.Expr, 12)
 	l.fieldMap["id"] = l.ID
 	l.fieldMap["imei"] = l.Imei
+	l.fieldMap["protocol_type"] = l.ProtocolType
 	l.fieldMap["latitud"] = l.Latitud
 	l.fieldMap["longitud"] = l.Longitud
 	l.fieldMap["date"] = l.Date
+	l.fieldMap["speed"] = l.Speed
+	l.fieldMap["device_temp"] = l.DeviceTemp
+	l.fieldMap["mileage"] = l.Mileage
+	l.fieldMap["is_gps"] = l.IsGps
+	l.fieldMap["is_history"] = l.IsHistory
+	l.fieldMap["engine_status"] = l.EngineStatus
 }
 
 func (l log) clone(db *gorm.DB) log {

@@ -1,9 +1,6 @@
 package db
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/Fonzeca/Trackin/db/model"
 	"github.com/Fonzeca/Trackin/db/query"
 	"github.com/Fonzeca/Trackin/rest/json"
@@ -22,13 +19,18 @@ func processData(data json.SimplyData) {
 		//TODO: log error
 		return
 	}
-	fmt.Println(time.Local.String())
-
 	log := model.Log{
-		Imei:     data.Imei,
-		Latitud:  data.Latitude,
-		Longitud: data.Longitude,
-		Date:     data.Date.Local(),
+		Imei:         data.Imei,
+		ProtocolType: data.ProtocolType,
+		Latitud:      data.Latitude,
+		Longitud:     data.Longitude,
+		Date:         data.Date.Local(),
+		Speed:        data.Speed,
+		DeviceTemp:   data.DeviceTemp,
+		Mileage:      data.Mileage,
+		IsGps:        data.GpsWorking,
+		IsHistory:    data.IsHistory,
+		EngineStatus: data.EngineStatus,
 	}
 
 	q := query.Use(db).Log
