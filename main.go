@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/Fonzeca/Trackin/db"
@@ -20,9 +21,10 @@ func main() {
 	e := echo.New()
 	e.POST("/data", func(c echo.Context) error {
 		data := jsonModel.SimplyData{}
-		list := GetJSONRawBody(c)
-		for k, _ := range list {
-			fmt.Println(k)
+		fmt.Println()
+		by, err := ioutil.ReadAll(c.Request().Body)
+		if err == nil {
+			fmt.Printf("%s", by)
 		}
 
 		c.Bind(&data)
