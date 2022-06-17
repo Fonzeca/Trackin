@@ -6,7 +6,7 @@ import (
 	"github.com/Fonzeca/Trackin/rest/json"
 )
 
-func deamon(canal chan json.SimplyData) {
+func Deamon(canal chan json.SimplyData) {
 	for {
 		data := <-canal
 		processData(data)
