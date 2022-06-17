@@ -2,8 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/Fonzeca/Trackin/db"
@@ -21,13 +19,10 @@ func main() {
 	e := echo.New()
 	e.POST("/data", func(c echo.Context) error {
 		data := jsonModel.SimplyData{}
-		fmt.Println()
-		by, err := ioutil.ReadAll(c.Request().Body)
-		if err == nil {
-			fmt.Printf("%s", by)
+		err := c.Bind(&data)
+		if err != nil {
+			return err
 		}
-
-		c.Bind(&data)
 		canal <- data
 		return c.NoContent(http.StatusOK)
 	})
