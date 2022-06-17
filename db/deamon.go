@@ -19,6 +19,14 @@ func processData(data json.SimplyData) {
 		//TODO: log error
 		return
 	}
+
+	nativeDb, err := db.DB()
+	if err != nil {
+		//TODO: log error
+		return
+	}
+	defer nativeDb.Close()
+
 	log := model.Log{
 		Imei:         data.Imei,
 		ProtocolType: data.ProtocolType,
