@@ -31,6 +31,7 @@ func newLog(db *gorm.DB) log {
 	_log.Imei = field.NewString(tableName, "imei")
 	_log.Latitud = field.NewFloat64(tableName, "latitud")
 	_log.Longitud = field.NewFloat64(tableName, "longitud")
+	_log.Date = field.NewTime(tableName, "date")
 
 	_log.fillFieldMap()
 
@@ -45,6 +46,7 @@ type log struct {
 	Imei     field.String
 	Latitud  field.Float64
 	Longitud field.Float64
+	Date     field.Time
 
 	fieldMap map[string]field.Expr
 }
@@ -65,6 +67,7 @@ func (l *log) updateTableName(table string) *log {
 	l.Imei = field.NewString(table, "imei")
 	l.Latitud = field.NewFloat64(table, "latitud")
 	l.Longitud = field.NewFloat64(table, "longitud")
+	l.Date = field.NewTime(table, "date")
 
 	l.fillFieldMap()
 
@@ -81,11 +84,12 @@ func (l *log) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (l *log) fillFieldMap() {
-	l.fieldMap = make(map[string]field.Expr, 4)
+	l.fieldMap = make(map[string]field.Expr, 5)
 	l.fieldMap["id"] = l.ID
 	l.fieldMap["imei"] = l.Imei
 	l.fieldMap["latitud"] = l.Latitud
 	l.fieldMap["longitud"] = l.Longitud
+	l.fieldMap["date"] = l.Date
 }
 
 func (l log) clone(db *gorm.DB) log {

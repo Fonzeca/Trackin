@@ -6,6 +6,4 @@ services:
       - .env
     container_name: trackin
     ports:
-      - "5896:5896"
-    networks:
-      - carmind
+      - "4762:4762"
