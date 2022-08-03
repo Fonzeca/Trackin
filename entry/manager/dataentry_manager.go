@@ -1,20 +1,36 @@
-package db
+package manager
 
 import (
+	"github.com/Fonzeca/Trackin/db"
 	"github.com/Fonzeca/Trackin/db/model"
 	"github.com/Fonzeca/Trackin/db/query"
-	"github.com/Fonzeca/Trackin/rest/json"
+	"github.com/Fonzeca/Trackin/entry/json"
 )
 
-func Deamon(canal chan json.SimplyData) {
+type DataEntryManager struct {
+	CanalEntrada chan json.SimplyData
+}
+
+func NewDataEntryManager() *DataEntryManager {
+	instance := &DataEntryManager{
+		CanalEntrada: make(chan json.SimplyData),
+	}
+
+	go instance.run()
+
+	return instance
+}
+
+//Goroutine daemon
+func (d *DataEntryManager) run() {
 	for {
-		data := <-canal
+		data := <-d.CanalEntrada
 		processData(data)
 	}
 }
 
 func processData(data json.SimplyData) {
-	db, err := ObtenerConexionDb()
+	db, err := db.ObtenerConexionDb()
 	if err != nil {
 		//TODO: log error
 		return
