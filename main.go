@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/Fonzeca/Trackin/entry"
+	"github.com/Fonzeca/Trackin/server"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 )
@@ -11,6 +12,10 @@ import (
 func main() {
 	e := echo.New()
 	entry.Router(e)
+
+	api := server.NewApi()
+
+	e.GET("/lastLog", api.GetLastLogByImei)
 
 	e.Logger.Fatal(e.Start(":4762"))
 }
