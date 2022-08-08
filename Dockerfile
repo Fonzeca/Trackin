@@ -12,6 +12,10 @@ COPY . .
 
 RUN go build -o /trackin .
 
+ENV TZ=America/Argentina/Buenos_Aires
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apk update && apk add tzdata
+
 EXPOSE 4762
 
 CMD [ "/trackin" ]
