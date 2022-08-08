@@ -20,7 +20,7 @@ func (ma *Manager) GetLastLogByImei(imei string) (model.LastLogView, error) {
 	}
 
 	log := model.Log{}
-	tx := db.Select("imei", "latitud", "longitud", "speed", "date").Last(&log, "imei = ?", imei)
+	tx := db.Select("imei", "latitud", "longitud", "speed", "date").Order("date desc").Where("imei = ?", imei).First(&log)
 
 	lastLog := model.LastLogView{
 		Imei:     log.Imei,
