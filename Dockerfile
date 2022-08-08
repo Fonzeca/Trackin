@@ -12,9 +12,9 @@ COPY . .
 
 RUN go build -o /trackin .
 
+RUN apk update && apk add --no-cache tzdata
 ENV TZ=America/Argentina/Buenos_Aires
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apk update && apk add tzdata
 
 EXPOSE 4762
 
