@@ -36,19 +36,12 @@ func processData(data json.SimplyData) {
 		return
 	}
 
-	nativeDb, err := db.DB()
-	if err != nil {
-		//TODO: log error
-		return
-	}
-	defer nativeDb.Close()
-
 	log := model.Log{
 		Imei:         data.Imei,
 		ProtocolType: data.ProtocolType,
 		Latitud:      data.Latitude,
 		Longitud:     data.Longitude,
-		Date:         data.Date.Local(),
+		Date:         data.Date,
 		Speed:        data.Speed,
 		DeviceTemp:   data.DeviceTemp,
 		Mileage:      data.Mileage,

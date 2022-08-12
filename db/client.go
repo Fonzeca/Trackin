@@ -7,7 +7,7 @@ import (
 
 //Sirve para obener el objeto para interactuar con la base de datos
 func ObtenerConexionDb() (*gorm.DB, error) {
-	dsn := "root:almacen.C12@tcp(vps-1791261-x.dattaweb.com:3306)/trackin"
+	dsn := "root:almacen.C12@tcp(vps-1791261-x.dattaweb.com:3306)/trackin?parseTime=True"
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, err

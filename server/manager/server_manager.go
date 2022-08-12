@@ -49,12 +49,13 @@ func (ma *Manager) GetRouteByImeiAndDate(imei string, from string, to string) (m
 		fromDate = time.Now()
 		fromDate = time.Date(fromDate.Year(), fromDate.Month(), fromDate.Day(), 0, 0, 0, 0, fromDate.Location())
 
-		toDate = time.Now()
+		toDate = time.Now().AddDate(0, 0, 1)
 		toDate = time.Date(toDate.Year(), toDate.Month(), toDate.Day(), 0, 0, 0, 0, toDate.Location())
+		toDate = toDate.Add(-time.Second)
 	}
 
 	logs := []model.Log{}
-	db.Table("log").Where("imei = ? AND date BETWEEN ? AND ?", imei, fromDate, toDate).Order("date DESC").Take(&logs)
+	db.Table("log").Where("imei = ? AND date BETWEEN ? AND ?", imei, fromDate.In(time.UTC), toDate.In(time.UTC)).Order("date DESC").Find(&logs)
 
 	view := model.RouteView{
 		Imei: imei,
