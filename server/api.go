@@ -42,3 +42,22 @@ func (api *api) GetLastLogByImei(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, log)
 }
+
+func (api *api) GetRoute(c echo.Context) error {
+
+	imei := c.QueryParam("imei")
+	from := c.QueryParam("from")
+	to := c.QueryParam("to")
+
+	if imei == "" {
+		return c.JSON(http.StatusBadRequest, "Parámetro imei incorrecto")
+	}
+
+	route, logErr := api.manager.GetRouteByImeiAndDate(imei, from, to)
+
+	if logErr != nil {
+		return c.JSON(http.StatusNotFound, logErr.Error())
+	}
+
+	return c.JSON(http.StatusOK, route)
+}

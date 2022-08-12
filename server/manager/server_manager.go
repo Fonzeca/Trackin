@@ -1,6 +1,8 @@
 package manager
 
 import (
+	"time"
+
 	"github.com/Fonzeca/Trackin/db"
 	"github.com/Fonzeca/Trackin/db/model"
 )
@@ -31,4 +33,49 @@ func (ma *Manager) GetLastLogByImei(imei string) (model.LastLogView, error) {
 	}
 
 	return lastLog, tx.Error
+}
+
+func (ma *Manager) GetRouteByImeiAndDate(imei string, from string, to string) (model.RouteView, error) {
+	db, err := db.ObtenerConexionDb()
+
+	if err != nil {
+		return model.RouteView{}, err
+	}
+
+	var fromDate time.Time
+	var toDate time.Time
+
+	if from == "" || to == "" {
+		fromDate = time.Now()
+		fromDate = time.Date(fromDate.Year(), fromDate.Month(), fromDate.Day(), 0, 0, 0, 0, fromDate.Location())
+
+		toDate = time.Now()
+		toDate = time.Date(toDate.Year(), toDate.Month(), toDate.Day(), 0, 0, 0, 0, toDate.Location())
+	}
+
+	logs := []model.Log{}
+	db.Table("log").Where("imei = ? AND date BETWEEN ? AND ?", imei, fromDate, toDate).Order("date DESC").Take(&logs)
+
+	view := model.RouteView{
+		Imei: imei,
+		From: fromDate.Format(time.RFC3339),
+		To:   toDate.Format(time.RFC3339),
+	}
+
+	data := []model.RouteDataView{}
+	for _, log := range logs {
+		dataLog := model.RouteDataView{
+			Date:  log.Date,
+			Speed: log.Speed,
+			Location: model.Location{
+				Latitutd: log.Latitud,
+				Longitud: log.Longitud,
+			},
+		}
+		data = append(data, dataLog)
+	}
+
+	view.Data = data
+
+	return view, nil
 }

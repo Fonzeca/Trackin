@@ -1,9 +1,0 @@
-version: "3.9"
-services:
-  trackin:
-    build: .
-    env_file:
-      - .env
-    container_name: trackin
-    ports:
-      - "4762:4762"
