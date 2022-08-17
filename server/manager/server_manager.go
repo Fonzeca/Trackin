@@ -15,7 +15,8 @@ func NewManager() Manager {
 }
 
 func (ma *Manager) GetLastLogByImei(imei string) (model.LastLogView, error) {
-	db, err := db.ObtenerConexionDb()
+	db, close, err := db.ObtenerConexionDb()
+	defer close()
 
 	if err != nil {
 		return model.LastLogView{}, err
@@ -36,7 +37,8 @@ func (ma *Manager) GetLastLogByImei(imei string) (model.LastLogView, error) {
 }
 
 func (ma *Manager) GetRouteByImeiAndDate(imei string, from string, to string) (model.RouteView, error) {
-	db, err := db.ObtenerConexionDb()
+	db, close, err := db.ObtenerConexionDb()
+	defer close()
 
 	if err != nil {
 		return model.RouteView{}, err

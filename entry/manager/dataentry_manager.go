@@ -30,11 +30,12 @@ func (d *DataEntryManager) run() {
 }
 
 func processData(data json.SimplyData) {
-	db, err := db.ObtenerConexionDb()
+	db, close, err := db.ObtenerConexionDb()
 	if err != nil {
 		//TODO: log error
 		return
 	}
+	defer close()
 
 	log := model.Log{
 		Imei:         data.Imei,
