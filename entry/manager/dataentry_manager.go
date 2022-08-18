@@ -30,6 +30,11 @@ func (d *DataEntryManager) run() {
 }
 
 func processData(data json.SimplyData) {
+	//Evitamos datos inecesarios que llegan por equivocacion.
+	if data.Latitude == 0 {
+		return
+	}
+
 	db, close, err := db.ObtenerConexionDb()
 	if err != nil {
 		//TODO: log error
