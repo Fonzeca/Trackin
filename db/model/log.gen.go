@@ -24,6 +24,7 @@ type Log struct {
 	IsGps        bool      `gorm:"column:is_gps" json:"is_gps"`
 	IsHistory    bool      `gorm:"column:is_history" json:"is_history"`
 	EngineStatus bool      `gorm:"column:engine_status" json:"engine_status"`
+	Azimuth      int32     `gorm:"column:azimuth" json:"azimuth"`
 }
 
 // TableName Log's table name

@@ -39,6 +39,7 @@ func newLog(db *gorm.DB) log {
 	_log.IsGps = field.NewBool(tableName, "is_gps")
 	_log.IsHistory = field.NewBool(tableName, "is_history")
 	_log.EngineStatus = field.NewBool(tableName, "engine_status")
+	_log.Azimuth = field.NewInt32(tableName, "azimuth")
 
 	_log.fillFieldMap()
 
@@ -61,6 +62,7 @@ type log struct {
 	IsGps        field.Bool
 	IsHistory    field.Bool
 	EngineStatus field.Bool
+	Azimuth      field.Int32
 
 	fieldMap map[string]field.Expr
 }
@@ -89,6 +91,7 @@ func (l *log) updateTableName(table string) *log {
 	l.IsGps = field.NewBool(table, "is_gps")
 	l.IsHistory = field.NewBool(table, "is_history")
 	l.EngineStatus = field.NewBool(table, "engine_status")
+	l.Azimuth = field.NewInt32(table, "azimuth")
 
 	l.fillFieldMap()
 
@@ -105,7 +108,7 @@ func (l *log) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (l *log) fillFieldMap() {
-	l.fieldMap = make(map[string]field.Expr, 12)
+	l.fieldMap = make(map[string]field.Expr, 13)
 	l.fieldMap["id"] = l.ID
 	l.fieldMap["imei"] = l.Imei
 	l.fieldMap["protocol_type"] = l.ProtocolType
@@ -118,6 +121,7 @@ func (l *log) fillFieldMap() {
 	l.fieldMap["is_gps"] = l.IsGps
 	l.fieldMap["is_history"] = l.IsHistory
 	l.fieldMap["engine_status"] = l.EngineStatus
+	l.fieldMap["azimuth"] = l.Azimuth
 }
 
 func (l log) clone(db *gorm.DB) log {

@@ -26,14 +26,43 @@ func (ma *Manager) GetLastLogByImei(imei string) (model.LastLogView, error) {
 	tx := db.Select("imei", "latitud", "longitud", "speed", "date").Order("date desc").Where("imei = ?", imei).First(&log)
 
 	lastLog := model.LastLogView{
-		Imei:     log.Imei,
-		Latitutd: log.Latitud,
-		Longitud: log.Longitud,
-		Speed:    log.Speed,
-		Date:     log.Date,
+		Imei: log.Imei,
+		Location: model.Location{
+			Latitutd: log.Latitud,
+			Longitud: log.Longitud,
+		},
+		Speed: log.Speed,
+		Date:  log.Date,
 	}
 
 	return lastLog, tx.Error
+}
+
+func (ma *Manager) GetVehiclesStateByImeis(imeis model.Imeis) ([]model.StateLogView, error) {
+	db, close, err := db.ObtenerConexionDb()
+	defer close()
+
+	if err != nil {
+		return nil, err
+	}
+
+	logs := []model.Log{}
+	tx := db.Select("imei", "latitud", "longitud", "engine_status", "azimuth", "max(date)").Where("imei IN ?", imeis.Imeis).Group("imei").Find(&logs)
+
+	stateLogsView := []model.StateLogView{}
+	for _, log := range logs {
+		stateLogsView = append(stateLogsView, model.StateLogView{
+			Imei: log.Imei,
+			Location: model.Location{
+				Latitutd: log.Latitud,
+				Longitud: log.Longitud,
+			},
+			EngineStatus: log.EngineStatus,
+			Azimuth:      log.Azimuth,
+		})
+	}
+
+	return stateLogsView, tx.Error
 }
 
 func (ma *Manager) GetRouteByImeiAndDate(imei string, from string, to string) (model.RouteView, error) {

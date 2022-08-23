@@ -3,11 +3,21 @@ package model
 import "time"
 
 type LastLogView struct {
-	Imei     string    `json:"imei"`
-	Latitutd float64   `json:"latitud"`
-	Longitud float64   `json:"longitud"`
-	Speed    float32   `json:"speed"`
-	Date     time.Time `json:"date"`
+	Imei string `json:"imei"`
+	Location
+	Speed float32   `json:"speed"`
+	Date  time.Time `json:"date"`
+}
+
+type Imeis struct {
+	Imeis []string `json:"imeis"`
+}
+
+type StateLogView struct {
+	Imei string `json:"imei"`
+	Location
+	EngineStatus bool  `json:"engine_status"`
+	Azimuth      int32 `json:"azimuth"`
 }
 
 type RouteView struct {

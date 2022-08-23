@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 
+	"github.com/Fonzeca/Trackin/db/model"
 	"github.com/Fonzeca/Trackin/server/manager"
 	"github.com/labstack/echo/v4"
 )
@@ -41,6 +42,19 @@ func (api *api) GetLastLogByImei(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, log)
+}
+
+func (api *api) GetVehiclesStateByImeis(c echo.Context) error {
+	data := model.Imeis{}
+	c.Bind(&data)
+
+	logs, logErr := api.manager.GetVehiclesStateByImeis(data)
+
+	if logErr != nil {
+		return c.JSON(http.StatusNotFound, logErr.Error())
+	}
+
+	return c.JSON(http.StatusOK, logs)
 }
 
 func (api *api) GetRoute(c echo.Context) error {
