@@ -48,7 +48,10 @@ func (api *api) GetVehiclesStateByImeis(c echo.Context) error {
 	data := model.Imeis{}
 	c.Bind(&data)
 
-	logs, logErr := api.manager.GetVehiclesStateByImeis(data)
+	val, _ := c.FormParams()
+	only := val.Get("only")
+
+	logs, logErr := api.manager.GetVehiclesStateByImeis(only, data)
 
 	if logErr != nil {
 		return c.JSON(http.StatusNotFound, logErr.Error())

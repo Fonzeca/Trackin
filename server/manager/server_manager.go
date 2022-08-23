@@ -5,6 +5,7 @@ import (
 
 	"github.com/Fonzeca/Trackin/db"
 	"github.com/Fonzeca/Trackin/db/model"
+	"gorm.io/gorm"
 )
 
 type Manager struct {
@@ -38,7 +39,7 @@ func (ma *Manager) GetLastLogByImei(imei string) (model.LastLogView, error) {
 	return lastLog, tx.Error
 }
 
-func (ma *Manager) GetVehiclesStateByImeis(imeis model.Imeis) ([]model.StateLogView, error) {
+func (ma *Manager) GetVehiclesStateByImeis(only string, imeis model.Imeis) ([]model.StateLogView, error) {
 	db, close, err := db.ObtenerConexionDb()
 	defer close()
 
@@ -47,7 +48,12 @@ func (ma *Manager) GetVehiclesStateByImeis(imeis model.Imeis) ([]model.StateLogV
 	}
 
 	logs := []model.Log{}
-	tx := db.Select("imei", "latitud", "longitud", "engine_status", "azimuth", "max(date)").Where("imei IN ?", imeis.Imeis).Group("imei").Find(&logs)
+	var tx *gorm.DB
+	if only != "" {
+		tx = db.Select("imei", only, "max(date)").Where("imei IN ?", imeis.Imeis).Group("imei").Find(&logs)
+	} else {
+		tx = db.Select("imei", "latitud", "longitud", "engine_status", "azimuth", "max(date)").Where("imei IN ?", imeis.Imeis).Group("imei").Find(&logs)
+	}
 
 	stateLogsView := []model.StateLogView{}
 	for _, log := range logs {
