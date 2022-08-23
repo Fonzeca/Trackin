@@ -1,7 +1,7 @@
 package manager
 
 import (
-	"time"
+	"fmt"
 
 	"github.com/Fonzeca/Trackin/db"
 	"github.com/Fonzeca/Trackin/db/model"
@@ -39,7 +39,7 @@ func (ma *Manager) GetLastLogByImei(imei string) (model.LastLogView, error) {
 	return lastLog, tx.Error
 }
 
-func (ma *Manager) GetVehiclesStateByImeis(only string, imeis model.Imeis) ([]model.StateLogView, error) {
+func (ma *Manager) GetVehiclesStateByImeis(only string, imeis model.StateRequest) ([]model.StateLogView, error) {
 	db, close, err := db.ObtenerConexionDb()
 	defer close()
 
@@ -71,49 +71,103 @@ func (ma *Manager) GetVehiclesStateByImeis(only string, imeis model.Imeis) ([]mo
 	return stateLogsView, tx.Error
 }
 
-func (ma *Manager) GetRouteByImeiAndDate(imei string, from string, to string) (model.RouteView, error) {
+func (ma *Manager) GetRouteByImei(requestRoute model.RouteRequest) ([]interface{}, error) {
 	db, close, err := db.ObtenerConexionDb()
 	defer close()
 
 	if err != nil {
-		return model.RouteView{}, err
-	}
-
-	var fromDate time.Time
-	var toDate time.Time
-
-	if from == "" || to == "" {
-		fromDate = time.Now()
-		fromDate = time.Date(fromDate.Year(), fromDate.Month(), fromDate.Day(), 0, 0, 0, 0, fromDate.Location())
-
-		toDate = time.Now().AddDate(0, 0, 1)
-		toDate = time.Date(toDate.Year(), toDate.Month(), toDate.Day(), 0, 0, 0, 0, toDate.Location())
-		toDate = toDate.Add(-time.Second)
+		return nil, err
 	}
 
 	logs := []model.Log{}
-	db.Table("log").Where("imei = ? AND date BETWEEN ? AND ?", imei, fromDate.In(time.UTC), toDate.In(time.UTC)).Order("date DESC").Find(&logs)
+	tx := db.Select("date", "latitud", "longitud", "speed", "mileage", "engine_status", "azimuth").Where("imei = ? AND date BETWEEN ? AND ?", requestRoute.Imei, requestRoute.From, requestRoute.To).Order("date DESC").Find(&logs)
 
-	view := model.RouteView{
-		Imei: imei,
-		From: fromDate.Format(time.RFC3339),
-		To:   toDate.Format(time.RFC3339),
-	}
+	routes := []interface{}{}
+	movingData := []model.RouteDataView{}
 
-	data := []model.RouteDataView{}
-	for _, log := range logs {
-		dataLog := model.RouteDataView{
-			Date:  log.Date,
-			Speed: log.Speed,
+	fromHour := ""
+	fromDate := ""
+
+	var isInStop bool = false
+	var isMoving bool = false
+
+	var initialMileage int32 = 0
+
+	for index, log := range logs {
+		if log.Speed == 0 || !*log.EngineStatus {
+
+			if isMoving {
+				isMoving = false
+				saveMovingLog(index-1, fromDate, fromHour, &routes, &logs, movingData, initialMileage)
+				movingData = []model.RouteDataView{}
+			}
+
+			if !isInStop {
+				isInStop = true
+				fromHour = fmt.Sprintf("%d:%d", log.Date.Hour(), log.Date.Minute())
+				fromDate = fmt.Sprintf("%d-%d-%d", log.Date.Year(), log.Date.Month(), log.Date.Day())
+			}
+
+			if index >= len(logs)-1 {
+				saveStopLog(index, fromDate, fromHour, &routes, &logs)
+			}
+			continue
+		}
+
+		if isInStop {
+			isInStop = false
+			saveStopLog(index-1, fromDate, fromHour, &routes, &logs)
+		}
+
+		if !isMoving {
+			isMoving = true
+			fromHour = fmt.Sprintf("%d:%d", log.Date.Hour(), log.Date.Minute())
+			fromDate = fmt.Sprintf("%d-%d-%d", log.Date.Year(), log.Date.Month(), log.Date.Day())
+			initialMileage = log.Mileage
+		}
+
+		movingData = append(movingData, model.RouteDataView{
 			Location: model.Location{
 				Latitutd: log.Latitud,
 				Longitud: log.Longitud,
 			},
+			Speed:   log.Speed,
+			Azimuth: log.Azimuth,
+		})
+
+		if index >= len(logs)-1 {
+			saveMovingLog(index, fromDate, fromHour, &routes, &logs, movingData, initialMileage)
+			movingData = []model.RouteDataView{}
 		}
-		data = append(data, dataLog)
+
 	}
+	return routes, tx.Error
+}
 
-	view.Data = data
+func saveStopLog(index int, fromDate string, fromHour string, routes *[]interface{}, logs *[]model.Log) {
+	*routes = append(*routes, model.StopView{
+		RouteView: model.RouteView{
+			Type: "Parada",
+			Date: fromDate,
+			From: fromHour,
+			To:   fmt.Sprintf("%d:%d", (*logs)[index].Date.Hour(), (*logs)[index].Date.Minute()),
+		},
+		Location: model.Location{
+			Latitutd: (*logs)[index].Latitud,
+			Longitud: (*logs)[index].Longitud,
+		},
+	})
+}
 
-	return view, nil
+func saveMovingLog(index int, fromDate string, fromHour string, routes *[]interface{}, logs *[]model.Log, movingData []model.RouteDataView, initialMileage int32) {
+	*routes = append(*routes, model.MoveView{
+		RouteView: model.RouteView{
+			Type: "Viaje",
+			Date: fromDate,
+			From: fromHour,
+			To:   fmt.Sprintf("%d:%d", (*logs)[index].Date.Hour(), (*logs)[index].Date.Minute()),
+		},
+		KM:   (*logs)[index].Mileage - initialMileage,
+		Data: movingData,
+	})
 }

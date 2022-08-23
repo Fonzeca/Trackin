@@ -45,7 +45,7 @@ func (api *api) GetLastLogByImei(c echo.Context) error {
 }
 
 func (api *api) GetVehiclesStateByImeis(c echo.Context) error {
-	data := model.Imeis{}
+	data := model.StateRequest{}
 	c.Bind(&data)
 
 	val, _ := c.FormParams()
@@ -60,17 +60,11 @@ func (api *api) GetVehiclesStateByImeis(c echo.Context) error {
 	return c.JSON(http.StatusOK, logs)
 }
 
-func (api *api) GetRoute(c echo.Context) error {
+func (api *api) GetRouteByImei(c echo.Context) error {
+	data := model.RouteRequest{}
+	c.Bind(&data)
 
-	imei := c.QueryParam("imei")
-	from := c.QueryParam("from")
-	to := c.QueryParam("to")
-
-	if imei == "" {
-		return c.JSON(http.StatusBadRequest, "Parámetro imei incorrecto")
-	}
-
-	route, logErr := api.manager.GetRouteByImeiAndDate(imei, from, to)
+	route, logErr := api.manager.GetRouteByImei(data)
 
 	if logErr != nil {
 		return c.JSON(http.StatusNotFound, logErr.Error())

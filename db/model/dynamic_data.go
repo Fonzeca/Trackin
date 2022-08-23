@@ -2,6 +2,11 @@ package model
 
 import "time"
 
+type Location struct {
+	Latitutd *float64 `json:"latitud,omitempty"`
+	Longitud *float64 `json:"longitud,omitempty"`
+}
+
 type LastLogView struct {
 	Imei string `json:"imei"`
 	Location
@@ -9,31 +14,43 @@ type LastLogView struct {
 	Date  time.Time `json:"date"`
 }
 
-type Imeis struct {
-	Imeis []string `json:"imeis"`
-}
-
 type StateLogView struct {
 	Imei string `json:"imei"`
 	Location
-	EngineStatus bool  `json:"engine_status"`
-	Azimuth      int32 `json:"azimuth"`
+	EngineStatus *bool  `json:"engine_status,omitempty"`
+	Azimuth      *int32 `json:"azimuth,omitempty"`
 }
 
 type RouteView struct {
-	Imei string          `json:"imei"`
-	From string          `json:"from"`
-	To   string          `json:"to"`
-	Data []RouteDataView `json:"data"`
+	Type string `json:"type"`
+	Date string `json:"date"`
+	From string `json:"from"`
+	To   string `json:"to"`
 }
 
 type RouteDataView struct {
 	Location
-	Date  time.Time `json:"date"`
-	Speed float32   `json:"speed"`
+	Speed   float32 `json:"speed"`
+	Azimuth *int32  `json:"azimuth,omitempty"`
 }
 
-type Location struct {
-	Latitutd float64 `json:"latitud"`
-	Longitud float64 `json:"longitud"`
+type StopView struct {
+	RouteView
+	Location
+}
+
+type MoveView struct {
+	RouteView
+	KM   int32           `json:"km"`
+	Data []RouteDataView `json:"data"`
+}
+
+type RouteRequest struct {
+	Imei string `json:"imei"`
+	From string `json:"from"`
+	To   string `json:"to"`
+}
+
+type StateRequest struct {
+	Imeis []string `json:"imeis"`
 }
