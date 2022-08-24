@@ -54,6 +54,7 @@ func processData(data json.SimplyData) {
 		IsGps:        data.GpsWorking,
 		IsHistory:    data.IsHistory,
 		EngineStatus: &data.EngineStatus,
+		Azimuth:      &data.Azimuth,
 	}
 
 	q := query.Use(db).Log

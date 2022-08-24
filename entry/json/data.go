@@ -14,4 +14,5 @@ type SimplyData struct {
 	GpsWorking   bool      `json:"gpsWorking"`
 	IsHistory    bool      `json:"isHistoryData"`
 	EngineStatus bool      `json:"iopIgnition"`
+	Azimuth      int32     `json:"azimuth"`
 }
