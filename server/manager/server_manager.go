@@ -80,7 +80,9 @@ func (ma *Manager) GetRouteByImei(requestRoute model.RouteRequest) ([]interface{
 	}
 
 	logs := []model.Log{}
-	tx := db.Select("date", "latitud", "longitud", "speed", "mileage", "engine_status", "azimuth").Where("imei = ? AND date BETWEEN ? AND ?", requestRoute.Imei, requestRoute.From, requestRoute.To).Order("date DESC").Find(&logs)
+	tx := db.Select("date", "latitud", "longitud", "speed", "mileage", "engine_status", "azimuth").Where("imei = ? AND date BETWEEN ? AND ?", requestRoute.Imei, requestRoute.From, requestRoute.To).Order("date ASC").Find(&logs)
+
+	print(len(logs))
 
 	routes := []interface{}{}
 	movingData := []model.RouteDataView{}
@@ -94,7 +96,7 @@ func (ma *Manager) GetRouteByImei(requestRoute model.RouteRequest) ([]interface{
 	var initialMileage int32 = 0
 
 	for index, log := range logs {
-		if log.Speed == 0 || !*log.EngineStatus {
+		if !*log.EngineStatus {
 
 			if isMoving {
 				isMoving = false
@@ -167,7 +169,7 @@ func saveMovingLog(index int, fromDate string, fromHour string, routes *[]interf
 			From: fromHour,
 			To:   fmt.Sprintf("%d:%d", (*logs)[index].Date.Hour(), (*logs)[index].Date.Minute()),
 		},
-		KM:   (*logs)[index].Mileage - initialMileage,
+		KM:   ((*logs)[index].Mileage - initialMileage) / 1000,
 		Data: movingData,
 	})
 }
