@@ -17,7 +17,7 @@ func main() {
 
 	e.GET("/getLastLogByImei", api.GetLastLogByImei)
 	e.GET("/getVehiclesStateByImeis", api.GetVehiclesStateByImeis)
-	e.GET("/getRouteByImei", api.GetRouteByImei)
+	e.POST("/getRouteByImei", api.GetRouteByImei)
 
 	e.Logger.Fatal(e.Start(":4762"))
 }

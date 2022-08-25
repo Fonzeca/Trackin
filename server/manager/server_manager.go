@@ -82,8 +82,6 @@ func (ma *Manager) GetRouteByImei(requestRoute model.RouteRequest) ([]interface{
 	logs := []model.Log{}
 	tx := db.Select("date", "latitud", "longitud", "speed", "mileage", "engine_status", "azimuth").Where("imei = ? AND date BETWEEN ? AND ?", requestRoute.Imei, requestRoute.From, requestRoute.To).Order("date ASC").Find(&logs)
 
-	print(len(logs))
-
 	routes := []interface{}{}
 	movingData := []model.RouteDataView{}
 
