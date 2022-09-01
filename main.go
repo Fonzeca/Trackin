@@ -16,7 +16,7 @@ func main() {
 	api := server.NewApi()
 
 	e.GET("/getLastLogByImei", api.GetLastLogByImei)
-	e.GET("/getVehiclesStateByImeis", api.GetVehiclesStateByImeis)
+	e.POST("/getVehiclesStateByImeis", api.GetVehiclesStateByImeis)
 	e.POST("/getRouteByImei", api.GetRouteByImei)
 
 	e.Logger.Fatal(e.Start(":4762"))
