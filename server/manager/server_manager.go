@@ -1,8 +1,6 @@
 package manager
 
 import (
-	"fmt"
-
 	"github.com/Fonzeca/Trackin/db"
 	"github.com/Fonzeca/Trackin/db/model"
 	"gorm.io/gorm"
@@ -104,8 +102,8 @@ func (ma *Manager) GetRouteByImei(requestRoute model.RouteRequest) ([]interface{
 
 			if !isInStop {
 				isInStop = true
-				fromHour = fmt.Sprintf("%d:%d", log.Date.Hour(), log.Date.Minute())
-				fromDate = fmt.Sprintf("%d-%d-%d", log.Date.Year(), log.Date.Month(), log.Date.Day())
+				fromHour = log.Date.Format("15:04")
+				fromDate = log.Date.Format("2006-01-02")
 			}
 
 			if index >= len(logs)-1 {
@@ -121,8 +119,8 @@ func (ma *Manager) GetRouteByImei(requestRoute model.RouteRequest) ([]interface{
 
 		if !isMoving {
 			isMoving = true
-			fromHour = fmt.Sprintf("%d:%d", log.Date.Hour(), log.Date.Minute())
-			fromDate = fmt.Sprintf("%d-%d-%d", log.Date.Year(), log.Date.Month(), log.Date.Day())
+			fromHour = log.Date.Format("15:04")
+			fromDate = log.Date.Format("2006-01-02")
 			initialMileage = log.Mileage
 		}
 
@@ -150,7 +148,7 @@ func saveStopLog(index int, fromDate string, fromHour string, routes *[]interfac
 			Type: "Parada",
 			Date: fromDate,
 			From: fromHour,
-			To:   fmt.Sprintf("%d:%d", (*logs)[index].Date.Hour(), (*logs)[index].Date.Minute()),
+			To:   (*logs)[index].Date.Format("15:04"),
 		},
 		Location: model.Location{
 			Latitutd: (*logs)[index].Latitud,
@@ -165,7 +163,7 @@ func saveMovingLog(index int, fromDate string, fromHour string, routes *[]interf
 			Type: "Viaje",
 			Date: fromDate,
 			From: fromHour,
-			To:   fmt.Sprintf("%d:%d", (*logs)[index].Date.Hour(), (*logs)[index].Date.Minute()),
+			To:   (*logs)[index].Date.Format("15:04"),
 		},
 		KM:   ((*logs)[index].Mileage - initialMileage) / 1000,
 		Data: movingData,
