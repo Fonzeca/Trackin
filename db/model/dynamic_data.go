@@ -22,10 +22,11 @@ type StateLogView struct {
 }
 
 type RouteView struct {
-	Type string `json:"type"`
-	Date string `json:"date"`
-	From string `json:"from"`
-	To   string `json:"to"`
+	Type     string `json:"type"`
+	FromDate string `json:"fromDate"`
+	ToDate   string `json:"toDate"`
+	FromHour string `json:"fromHour"`
+	ToHour   string `json:"toHour"`
 }
 
 type RouteDataView struct {

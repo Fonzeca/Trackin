@@ -145,10 +145,11 @@ func (ma *Manager) GetRouteByImei(requestRoute model.RouteRequest) ([]interface{
 func saveStopLog(index int, fromDate string, fromHour string, routes *[]interface{}, logs *[]model.Log) {
 	*routes = append(*routes, model.StopView{
 		RouteView: model.RouteView{
-			Type: "Parada",
-			Date: fromDate,
-			From: fromHour,
-			To:   (*logs)[index].Date.Format("15:04"),
+			Type:     "Parada",
+			FromDate: fromDate,
+			ToDate:   (*logs)[index].Date.Format("2006-01-02"),
+			FromHour: fromHour,
+			ToHour:   (*logs)[index].Date.Format("15:04"),
 		},
 		Location: model.Location{
 			Latitutd: (*logs)[index].Latitud,
@@ -160,10 +161,11 @@ func saveStopLog(index int, fromDate string, fromHour string, routes *[]interfac
 func saveMovingLog(index int, fromDate string, fromHour string, routes *[]interface{}, logs *[]model.Log, movingData []model.RouteDataView, initialMileage int32) {
 	*routes = append(*routes, model.MoveView{
 		RouteView: model.RouteView{
-			Type: "Viaje",
-			Date: fromDate,
-			From: fromHour,
-			To:   (*logs)[index].Date.Format("15:04"),
+			Type:     "Viaje",
+			FromDate: fromDate,
+			ToDate:   (*logs)[index].Date.Format("2006-01-02"),
+			FromHour: fromHour,
+			ToHour:   (*logs)[index].Date.Format("15:04"),
 		},
 		KM:   ((*logs)[index].Mileage - initialMileage) / 1000,
 		Data: movingData,
