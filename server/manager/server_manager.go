@@ -54,6 +54,7 @@ func (ma *Manager) GetVehiclesStateByImeis(only string, imeis model.StateRequest
 		} else {
 			tx = db.Select("imei", "latitud", "longitud", "engine_status", "azimuth", "date").Where("imei = ?", imei).Order("date DESC").Find(&log)
 		}
+		logs = append(logs, log)
 	}
 
 	stateLogsView := []model.StateLogView{}
