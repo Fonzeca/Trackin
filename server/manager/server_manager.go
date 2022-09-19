@@ -47,10 +47,13 @@ func (ma *Manager) GetVehiclesStateByImeis(only string, imeis model.StateRequest
 
 	logs := []model.Log{}
 	var tx *gorm.DB
-	if only != "" {
-		tx = db.Select("imei", only, "max(date)").Where("imei IN ?", imeis.Imeis).Group("imei").Find(&logs)
-	} else {
-		tx = db.Select("imei", "latitud", "longitud", "engine_status", "azimuth", "max(date)").Where("imei IN ?", imeis.Imeis).Group("imei").Find(&logs)
+	for _, imei := range imeis.Imeis {
+		log := model.Log{}
+		if only != "" {
+			tx = db.Select("imei", only, "date").Where("imei = ?", imei).Order("date DESC").Find(&log)
+		} else {
+			tx = db.Select("imei", "latitud", "longitud", "engine_status", "azimuth", "date").Where("imei = ?", imei).Order("date DESC").Find(&log)
+		}
 	}
 
 	stateLogsView := []model.StateLogView{}
