@@ -7,10 +7,17 @@ import (
 )
 
 type Manager struct {
+	//Variable para setear ids para las vistas
+	id int32
 }
 
 func NewManager() Manager {
-	return Manager{}
+	return Manager{id: 0}
+}
+
+func (ma *Manager) getId() int32 {
+	ma.id++
+	return ma.id
 }
 
 func (ma *Manager) GetLastLogByImei(imei string) (model.LastLogView, error) {
@@ -80,7 +87,6 @@ func (ma *Manager) GetRouteByImei(requestRoute model.RouteRequest) ([]interface{
 	if err != nil {
 		return nil, err
 	}
-	var id int32 = 0
 
 	logs := []model.Log{}
 	tx := db.Select("date", "latitud", "longitud", "speed", "mileage", "engine_status", "azimuth").Where("imei = ? AND date BETWEEN ? AND ?", requestRoute.Imei, requestRoute.From, requestRoute.To).Order("date ASC").Find(&logs)
@@ -101,7 +107,7 @@ func (ma *Manager) GetRouteByImei(requestRoute model.RouteRequest) ([]interface{
 
 			if isMoving {
 				isMoving = false
-				saveMovingLog(index-1, fromDate, fromHour, id, &routes, &logs, movingData, initialMileage)
+				saveMovingLog(index-1, fromDate, fromHour, ma.getId(), &routes, &logs, movingData, initialMileage)
 				movingData = []model.RouteDataView{}
 			}
 
@@ -112,14 +118,14 @@ func (ma *Manager) GetRouteByImei(requestRoute model.RouteRequest) ([]interface{
 			}
 
 			if index >= len(logs)-1 {
-				saveStopLog(index, fromDate, fromHour, id, &routes, &logs)
+				saveStopLog(index, fromDate, fromHour, ma.getId(), &routes, &logs)
 			}
 			continue
 		}
 
 		if isInStop {
 			isInStop = false
-			saveStopLog(index-1, fromDate, fromHour, id, &routes, &logs)
+			saveStopLog(index-1, fromDate, fromHour, ma.getId(), &routes, &logs)
 		}
 
 		if !isMoving {
@@ -139,11 +145,11 @@ func (ma *Manager) GetRouteByImei(requestRoute model.RouteRequest) ([]interface{
 		})
 
 		if index >= len(logs)-1 {
-			saveMovingLog(index, fromDate, fromHour, id, &routes, &logs, movingData, initialMileage)
+			saveMovingLog(index, fromDate, fromHour, ma.getId(), &routes, &logs, movingData, initialMileage)
 			movingData = []model.RouteDataView{}
 		}
-		id++
 	}
+	ma.id = 0
 	return routes, tx.Error
 }
 
