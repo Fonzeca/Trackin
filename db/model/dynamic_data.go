@@ -22,6 +22,7 @@ type StateLogView struct {
 }
 
 type RouteView struct {
+	Id       int32  `json:"id"`
 	Type     string `json:"type"`
 	FromDate string `json:"fromDate"`
 	ToDate   string `json:"toDate"`

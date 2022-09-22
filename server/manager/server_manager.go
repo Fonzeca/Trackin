@@ -80,6 +80,7 @@ func (ma *Manager) GetRouteByImei(requestRoute model.RouteRequest) ([]interface{
 	if err != nil {
 		return nil, err
 	}
+	var id int32 = 0
 
 	logs := []model.Log{}
 	tx := db.Select("date", "latitud", "longitud", "speed", "mileage", "engine_status", "azimuth").Where("imei = ? AND date BETWEEN ? AND ?", requestRoute.Imei, requestRoute.From, requestRoute.To).Order("date ASC").Find(&logs)
@@ -100,7 +101,7 @@ func (ma *Manager) GetRouteByImei(requestRoute model.RouteRequest) ([]interface{
 
 			if isMoving {
 				isMoving = false
-				saveMovingLog(index-1, fromDate, fromHour, &routes, &logs, movingData, initialMileage)
+				saveMovingLog(index-1, fromDate, fromHour, id, &routes, &logs, movingData, initialMileage)
 				movingData = []model.RouteDataView{}
 			}
 
@@ -111,14 +112,14 @@ func (ma *Manager) GetRouteByImei(requestRoute model.RouteRequest) ([]interface{
 			}
 
 			if index >= len(logs)-1 {
-				saveStopLog(index, fromDate, fromHour, &routes, &logs)
+				saveStopLog(index, fromDate, fromHour, id, &routes, &logs)
 			}
 			continue
 		}
 
 		if isInStop {
 			isInStop = false
-			saveStopLog(index-1, fromDate, fromHour, &routes, &logs)
+			saveStopLog(index-1, fromDate, fromHour, id, &routes, &logs)
 		}
 
 		if !isMoving {
@@ -138,17 +139,18 @@ func (ma *Manager) GetRouteByImei(requestRoute model.RouteRequest) ([]interface{
 		})
 
 		if index >= len(logs)-1 {
-			saveMovingLog(index, fromDate, fromHour, &routes, &logs, movingData, initialMileage)
+			saveMovingLog(index, fromDate, fromHour, id, &routes, &logs, movingData, initialMileage)
 			movingData = []model.RouteDataView{}
 		}
-
+		id++
 	}
 	return routes, tx.Error
 }
 
-func saveStopLog(index int, fromDate string, fromHour string, routes *[]interface{}, logs *[]model.Log) {
+func saveStopLog(index int, fromDate string, fromHour string, id int32, routes *[]interface{}, logs *[]model.Log) {
 	*routes = append(*routes, model.StopView{
 		RouteView: model.RouteView{
+			Id:       id,
 			Type:     "Parada",
 			FromDate: fromDate,
 			ToDate:   (*logs)[index].Date.Format("2006-01-02"),
@@ -162,9 +164,10 @@ func saveStopLog(index int, fromDate string, fromHour string, routes *[]interfac
 	})
 }
 
-func saveMovingLog(index int, fromDate string, fromHour string, routes *[]interface{}, logs *[]model.Log, movingData []model.RouteDataView, initialMileage int32) {
+func saveMovingLog(index int, fromDate string, fromHour string, id int32, routes *[]interface{}, logs *[]model.Log, movingData []model.RouteDataView, initialMileage int32) {
 	*routes = append(*routes, model.MoveView{
 		RouteView: model.RouteView{
+			Id:       id,
 			Type:     "Viaje",
 			FromDate: fromDate,
 			ToDate:   (*logs)[index].Date.Format("2006-01-02"),
