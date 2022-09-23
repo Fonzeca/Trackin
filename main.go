@@ -6,6 +6,7 @@ import (
 	"github.com/Fonzeca/Trackin/entry"
 	"github.com/Fonzeca/Trackin/server"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
 )
 
@@ -18,6 +19,7 @@ func main() {
 	e.GET("/getLastLogByImei", api.GetLastLogByImei)
 	e.POST("/getVehiclesStateByImeis", api.GetVehiclesStateByImeis)
 	e.POST("/getRouteByImei", api.GetRouteByImei)
+	e.Use(middleware.CORS())
 
 	e.Logger.Fatal(e.Start(":4762"))
 }
