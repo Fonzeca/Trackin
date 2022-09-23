@@ -3,7 +3,6 @@ package manager
 import (
 	"github.com/Fonzeca/Trackin/db"
 	"github.com/Fonzeca/Trackin/db/model"
-	"gorm.io/gorm"
 )
 
 type Manager struct {
@@ -53,13 +52,12 @@ func (ma *Manager) GetVehiclesStateByImeis(only string, imeis model.StateRequest
 	}
 
 	logs := []model.Log{}
-	var tx *gorm.DB
 	for _, imei := range imeis.Imeis {
 		log := model.Log{}
 		if only != "" {
-			tx = db.Select("imei", only, "date").Where("imei = ?", imei).Order("date DESC").Find(&log)
+			db.Select("imei", only, "date").Where("imei = ?", imei).Order("date DESC").Find(&log)
 		} else {
-			tx = db.Select("imei", "latitud", "longitud", "engine_status", "azimuth", "date").Where("imei = ?", imei).Order("date DESC").Find(&log)
+			db.Select("imei", "latitud", "longitud", "engine_status", "azimuth", "date").Where("imei = ?", imei).Order("date DESC").Find(&log)
 		}
 		logs = append(logs, log)
 	}
@@ -77,7 +75,7 @@ func (ma *Manager) GetVehiclesStateByImeis(only string, imeis model.StateRequest
 		})
 	}
 
-	return stateLogsView, tx.Error
+	return stateLogsView, nil
 }
 
 func (ma *Manager) GetRouteByImei(requestRoute model.RouteRequest) ([]interface{}, error) {
