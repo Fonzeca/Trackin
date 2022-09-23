@@ -15,11 +15,13 @@ func main() {
 	entry.Router(e)
 
 	api := server.NewApi()
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+	}))
 
 	e.GET("/getLastLogByImei", api.GetLastLogByImei)
 	e.POST("/getVehiclesStateByImeis", api.GetVehiclesStateByImeis)
 	e.POST("/getRouteByImei", api.GetRouteByImei)
-	e.Use(middleware.CORS())
 
 	e.Logger.Fatal(e.Start(":4762"))
 }
