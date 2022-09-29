@@ -56,3 +56,10 @@ type RouteRequest struct {
 type StateRequest struct {
 	Imeis []string `json:"imeis"`
 }
+
+type ZoneView struct {
+	Id           int32  `json:"id,omitempty"`
+	ColorLinea   string `json:"color_linea,omitempty"`
+	ColorRelleno string `json:"color_relleno,omitempty"`
+	Puntos       string `json:"puntos,omitempty"`
+}

@@ -1,6 +1,8 @@
 package manager
 
 import (
+	"strconv"
+
 	"github.com/Fonzeca/Trackin/db"
 	"github.com/Fonzeca/Trackin/db/model"
 )
@@ -181,4 +183,65 @@ func saveMovingLog(index int, fromDate string, fromHour string, id int32, routes
 		KM:   ((*logs)[index].Mileage - initialMileage) / 1000,
 		Data: movingData,
 	})
+}
+
+func (ma *Manager) CreateZone(zoneView model.ZoneView) error {
+	db, close, err := db.ObtenerConexionDb()
+	defer close()
+
+	if err != nil {
+		return err
+	}
+
+	zone := model.Zona{
+		ColorLinea:   zoneView.ColorLinea,
+		ColorRelleno: zoneView.ColorRelleno,
+		Puntos:       zoneView.Puntos}
+	tx := db.Create(&zone)
+
+	return tx.Error
+}
+
+func (ma *Manager) EditZoneById(idParam string, zoneView model.ZoneView) error {
+	db, close, err := db.ObtenerConexionDb()
+	defer close()
+
+	if err != nil {
+		return err
+	}
+
+	id, idParseErr := strconv.Atoi(idParam)
+
+	if idParseErr != nil {
+		return idParseErr
+	}
+
+	zone := model.Zona{
+		ID:           int32(id),
+		ColorLinea:   zoneView.ColorLinea,
+		ColorRelleno: zoneView.ColorRelleno,
+		Puntos:       zoneView.Puntos}
+	tx := db.Save(&zone)
+
+	return tx.Error
+}
+
+func (ma *Manager) DeleteZoneById(idParam string) error {
+	db, close, err := db.ObtenerConexionDb()
+	defer close()
+
+	if err != nil {
+		return err
+	}
+
+	id, idParseErr := strconv.Atoi(idParam)
+
+	if idParseErr != nil {
+		return idParseErr
+	}
+
+	zone := model.Zona{ID: int32(id)}
+	tx := db.Delete(&zone)
+
+	return tx.Error
 }

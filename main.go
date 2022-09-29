@@ -23,6 +23,10 @@ func main() {
 	e.POST("/getVehiclesStateByImeis", api.GetVehiclesStateByImeis)
 	e.POST("/getRouteByImei", api.GetRouteByImei)
 
+	e.POST("/createZone", api.CreateZone)
+	e.PUT("/editZoneById", api.EditZoneById)
+	e.DELETE("/deleteZoneById", api.DeleteZoneById)
+
 	e.Logger.Fatal(e.Start(":4762"))
 }
 

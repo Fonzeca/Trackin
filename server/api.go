@@ -72,3 +72,45 @@ func (api *api) GetRouteByImei(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, route)
 }
+
+func (api *api) CreateZone(c echo.Context) error {
+	data := model.ZoneView{}
+	c.Bind(&data)
+
+	zoneErr := api.manager.CreateZone(data)
+
+	if zoneErr != nil {
+		return c.JSON(http.StatusBadRequest, zoneErr.Error())
+	}
+
+	return c.NoContent(http.StatusOK)
+}
+
+func (api *api) EditZoneById(c echo.Context) error {
+	data := model.ZoneView{}
+	c.Bind(&data)
+
+	val, _ := c.FormParams()
+	id := val.Get("id")
+
+	zoneErr := api.manager.EditZoneById(id, data)
+
+	if zoneErr != nil {
+		return c.JSON(http.StatusBadRequest, zoneErr.Error())
+	}
+
+	return c.NoContent(http.StatusOK)
+}
+
+func (api *api) DeleteZoneById(c echo.Context) error {
+	val, _ := c.FormParams()
+	id := val.Get("id")
+
+	zoneErr := api.manager.DeleteZoneById(id)
+
+	if zoneErr != nil {
+		return c.JSON(http.StatusBadRequest, zoneErr.Error())
+	}
+
+	return c.NoContent(http.StatusOK)
+}

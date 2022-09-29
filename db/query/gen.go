@@ -13,33 +13,43 @@ import (
 
 func Use(db *gorm.DB) *Query {
 	return &Query{
-		db:  db,
-		Log: newLog(db),
+		db:           db,
+		Log:          newLog(db),
+		Zona:         newZona(db),
+		ZonaVehiculo: newZonaVehiculo(db),
 	}
 }
 
 type Query struct {
 	db *gorm.DB
 
-	Log log
+	Log          log
+	Zona         zona
+	ZonaVehiculo zonaVehiculo
 }
 
 func (q *Query) Available() bool { return q.db != nil }
 
 func (q *Query) clone(db *gorm.DB) *Query {
 	return &Query{
-		db:  db,
-		Log: q.Log.clone(db),
+		db:           db,
+		Log:          q.Log.clone(db),
+		Zona:         q.Zona.clone(db),
+		ZonaVehiculo: q.ZonaVehiculo.clone(db),
 	}
 }
 
 type queryCtx struct {
-	Log logDo
+	Log          logDo
+	Zona         zonaDo
+	ZonaVehiculo zonaVehiculoDo
 }
 
 func (q *Query) WithContext(ctx context.Context) *queryCtx {
 	return &queryCtx{
-		Log: *q.Log.WithContext(ctx),
+		Log:          *q.Log.WithContext(ctx),
+		Zona:         *q.Zona.WithContext(ctx),
+		ZonaVehiculo: *q.ZonaVehiculo.WithContext(ctx),
 	}
 }
 
