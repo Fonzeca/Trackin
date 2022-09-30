@@ -34,12 +34,14 @@ func newLog(db *gorm.DB) log {
 	_log.Longitud = field.NewFloat64(tableName, "longitud")
 	_log.Date = field.NewTime(tableName, "date")
 	_log.Speed = field.NewFloat32(tableName, "speed")
+	_log.AnalogInput1 = field.NewFloat32(tableName, "analog_input_1")
 	_log.DeviceTemp = field.NewInt32(tableName, "device_temp")
 	_log.Mileage = field.NewInt32(tableName, "mileage")
 	_log.IsGps = field.NewBool(tableName, "is_gps")
 	_log.IsHistory = field.NewBool(tableName, "is_history")
 	_log.EngineStatus = field.NewBool(tableName, "engine_status")
 	_log.Azimuth = field.NewInt32(tableName, "azimuth")
+	_log.Payload = field.NewString(tableName, "payload")
 
 	_log.fillFieldMap()
 
@@ -57,12 +59,14 @@ type log struct {
 	Longitud     field.Float64
 	Date         field.Time
 	Speed        field.Float32
+	AnalogInput1 field.Float32
 	DeviceTemp   field.Int32
 	Mileage      field.Int32
 	IsGps        field.Bool
 	IsHistory    field.Bool
 	EngineStatus field.Bool
 	Azimuth      field.Int32
+	Payload      field.String
 
 	fieldMap map[string]field.Expr
 }
@@ -86,12 +90,14 @@ func (l *log) updateTableName(table string) *log {
 	l.Longitud = field.NewFloat64(table, "longitud")
 	l.Date = field.NewTime(table, "date")
 	l.Speed = field.NewFloat32(table, "speed")
+	l.AnalogInput1 = field.NewFloat32(table, "analog_input_1")
 	l.DeviceTemp = field.NewInt32(table, "device_temp")
 	l.Mileage = field.NewInt32(table, "mileage")
 	l.IsGps = field.NewBool(table, "is_gps")
 	l.IsHistory = field.NewBool(table, "is_history")
 	l.EngineStatus = field.NewBool(table, "engine_status")
 	l.Azimuth = field.NewInt32(table, "azimuth")
+	l.Payload = field.NewString(table, "payload")
 
 	l.fillFieldMap()
 
@@ -108,7 +114,7 @@ func (l *log) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (l *log) fillFieldMap() {
-	l.fieldMap = make(map[string]field.Expr, 13)
+	l.fieldMap = make(map[string]field.Expr, 15)
 	l.fieldMap["id"] = l.ID
 	l.fieldMap["imei"] = l.Imei
 	l.fieldMap["protocol_type"] = l.ProtocolType
@@ -116,12 +122,14 @@ func (l *log) fillFieldMap() {
 	l.fieldMap["longitud"] = l.Longitud
 	l.fieldMap["date"] = l.Date
 	l.fieldMap["speed"] = l.Speed
+	l.fieldMap["analog_input_1"] = l.AnalogInput1
 	l.fieldMap["device_temp"] = l.DeviceTemp
 	l.fieldMap["mileage"] = l.Mileage
 	l.fieldMap["is_gps"] = l.IsGps
 	l.fieldMap["is_history"] = l.IsHistory
 	l.fieldMap["engine_status"] = l.EngineStatus
 	l.fieldMap["azimuth"] = l.Azimuth
+	l.fieldMap["payload"] = l.Payload
 }
 
 func (l log) clone(db *gorm.DB) log {

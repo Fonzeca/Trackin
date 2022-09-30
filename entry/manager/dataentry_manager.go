@@ -45,16 +45,18 @@ func processData(data json.SimplyData) {
 	log := model.Log{
 		Imei:         data.Imei,
 		ProtocolType: data.ProtocolType,
-		Latitud:      &data.Latitude,
-		Longitud:     &data.Longitude,
+		Latitud:      data.Latitude,
+		Longitud:     data.Longitude,
 		Date:         data.Date,
 		Speed:        data.Speed,
+		AnalogInput1: data.AnalogInput1,
 		DeviceTemp:   data.DeviceTemp,
 		Mileage:      data.Mileage,
 		IsGps:        data.GpsWorking,
 		IsHistory:    data.IsHistory,
-		EngineStatus: &data.EngineStatus,
-		Azimuth:      &data.Azimuth,
+		EngineStatus: data.EngineStatus,
+		Azimuth:      data.Azimuth,
+		Payload:      data.PayLoad,
 	}
 
 	q := query.Use(db).Log
