@@ -17,7 +17,7 @@ type LastLogView struct {
 type StateLogView struct {
 	Imei string `json:"imei"`
 	Location
-	EngineStatus bool  `json:"engine_status,omitempty"`
+	EngineStatus bool  `json:"engine_status"`
 	Azimuth      int32 `json:"azimuth,omitempty"`
 }
 
