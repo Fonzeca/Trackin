@@ -19,12 +19,14 @@ type Log struct {
 	Longitud     *float64   `gorm:"column:longitud" json:"longitud"`
 	Date         time.Time `gorm:"column:date;not null" json:"date"`
 	Speed        float32   `gorm:"column:speed" json:"speed"`
+	AnalogInput1 float32   `gorm:"column:analog_input_1;not null" json:"analog_input_1"`
 	DeviceTemp   int32     `gorm:"column:device_temp" json:"device_temp"`
 	Mileage      int32     `gorm:"column:mileage" json:"mileage"`
 	IsGps        bool      `gorm:"column:is_gps" json:"is_gps"`
 	IsHistory    bool      `gorm:"column:is_history" json:"is_history"`
 	EngineStatus *bool      `gorm:"column:engine_status" json:"engine_status"`
 	Azimuth      *int32     `gorm:"column:azimuth" json:"azimuth"`
+	Payload      string    `gorm:"column:payload" json:"payload"`
 }
 
 // TableName Log's table name

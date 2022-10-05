@@ -10,6 +10,7 @@ const TableNameZonaVehiculo = "zona_vehiculos"
 type ZonaVehiculo struct {
 	ID            int32 `gorm:"column:id;primaryKey;autoIncrement:true" json:"id"`
 	ZonaID        int32 `gorm:"column:zona_id;not null" json:"zona_id"`
+	VehiculoID    int32 `gorm:"column:vehiculo_id;not null" json:"vehiculo_id"`
 	AvisarEntrada bool  `gorm:"column:avisar_entrada;not null" json:"avisar_entrada"`
 	AvisarSalida  bool  `gorm:"column:avisar_salida;not null" json:"avisar_salida"`
 }

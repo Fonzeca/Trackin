@@ -9,6 +9,7 @@ const TableNameZona = "zona"
 // Zona mapped from table <zona>
 type Zona struct {
 	ID           int32  `gorm:"column:id;primaryKey;autoIncrement:true" json:"id"`
+	EmpresaID    int32  `gorm:"column:empresa_id;not null" json:"empresa_id"`
 	ColorLinea   string `gorm:"column:color_linea;not null" json:"color_linea"`
 	ColorRelleno string `gorm:"column:color_relleno;not null" json:"color_relleno"`
 	Puntos       string `gorm:"column:puntos;not null" json:"puntos"`

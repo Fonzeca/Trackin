@@ -45,7 +45,7 @@ func (ma *Manager) GetLastLogByImei(imei string) (model.LastLogView, error) {
 	return lastLog, tx.Error
 }
 
-func (ma *Manager) GetVehiclesStateByImeis(only string, imeis model.StateRequest) ([]model.StateLogView, error) {
+func (ma *Manager) GetVehiclesStateByImeis(only string, imeis model.ImeisBody) ([]model.StateLogView, error) {
 	db, close, err := db.ObtenerConexionDb()
 	defer close()
 
@@ -185,6 +185,27 @@ func saveMovingLog(index int, fromDate string, fromHour string, id int32, routes
 	})
 }
 
+func (ma *Manager) GetZonesByEmpresaId(idParam string) ([]model.Zona, error) {
+	db, close, err := db.ObtenerConexionDb()
+	defer close()
+
+	if err != nil {
+		return nil, err
+	}
+
+	id, idParseErr := strconv.Atoi(idParam)
+
+	if idParseErr != nil {
+		return []model.Zona{}, idParseErr
+	}
+
+	zones := []model.Zona{}
+
+	db.Find(&zones).Where("empresa_id = ?", id)
+
+	return zones, nil
+}
+
 func (ma *Manager) CreateZone(zoneView model.ZoneView) error {
 	db, close, err := db.ObtenerConexionDb()
 	defer close()
@@ -194,6 +215,7 @@ func (ma *Manager) CreateZone(zoneView model.ZoneView) error {
 	}
 
 	zone := model.Zona{
+		EmpresaID:    int32(zoneView.EmpresaId),
 		ColorLinea:   zoneView.ColorLinea,
 		ColorRelleno: zoneView.ColorRelleno,
 		Puntos:       zoneView.Puntos}
@@ -218,6 +240,7 @@ func (ma *Manager) EditZoneById(idParam string, zoneView model.ZoneView) error {
 
 	zone := model.Zona{
 		ID:           int32(id),
+		EmpresaID:    int32(zoneView.EmpresaId),
 		ColorLinea:   zoneView.ColorLinea,
 		ColorRelleno: zoneView.ColorRelleno,
 		Puntos:       zoneView.Puntos}

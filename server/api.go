@@ -45,7 +45,7 @@ func (api *api) GetLastLogByImei(c echo.Context) error {
 }
 
 func (api *api) GetVehiclesStateByImeis(c echo.Context) error {
-	data := model.StateRequest{}
+	data := model.ImeisBody{}
 	c.Bind(&data)
 
 	val, _ := c.FormParams()
@@ -71,6 +71,19 @@ func (api *api) GetRouteByImei(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, route)
+}
+
+func (api *api) GetZonesByEmpresaId(c echo.Context) error {
+	val, _ := c.FormParams()
+	id := val.Get("id")
+
+	zones, zoneErr := api.manager.GetZonesByEmpresaId(id)
+
+	if zoneErr != nil {
+		return c.JSON(http.StatusNotFound, zoneErr.Error())
+	}
+
+	return c.JSON(http.StatusOK, zones)
 }
 
 func (api *api) CreateZone(c echo.Context) error {

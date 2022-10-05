@@ -23,6 +23,7 @@ func main() {
 	e.POST("/getVehiclesStateByImeis", api.GetVehiclesStateByImeis)
 	e.POST("/getRouteByImei", api.GetRouteByImei)
 
+	e.POST("/getZonesByEmpresaId", api.GetZonesByEmpresaId)
 	e.POST("/createZone", api.CreateZone)
 	e.PUT("/editZoneById", api.EditZoneById)
 	e.DELETE("/deleteZoneById", api.DeleteZoneById)

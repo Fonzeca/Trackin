@@ -28,6 +28,7 @@ func newZona(db *gorm.DB) zona {
 	tableName := _zona.zonaDo.TableName()
 	_zona.ALL = field.NewField(tableName, "*")
 	_zona.ID = field.NewInt32(tableName, "id")
+	_zona.EmpresaID = field.NewInt32(tableName, "empresa_id")
 	_zona.ColorLinea = field.NewString(tableName, "color_linea")
 	_zona.ColorRelleno = field.NewString(tableName, "color_relleno")
 	_zona.Puntos = field.NewString(tableName, "puntos")
@@ -42,6 +43,7 @@ type zona struct {
 
 	ALL          field.Field
 	ID           field.Int32
+	EmpresaID    field.Int32
 	ColorLinea   field.String
 	ColorRelleno field.String
 	Puntos       field.String
@@ -62,6 +64,7 @@ func (z zona) As(alias string) *zona {
 func (z *zona) updateTableName(table string) *zona {
 	z.ALL = field.NewField(table, "*")
 	z.ID = field.NewInt32(table, "id")
+	z.EmpresaID = field.NewInt32(table, "empresa_id")
 	z.ColorLinea = field.NewString(table, "color_linea")
 	z.ColorRelleno = field.NewString(table, "color_relleno")
 	z.Puntos = field.NewString(table, "puntos")
@@ -81,8 +84,9 @@ func (z *zona) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (z *zona) fillFieldMap() {
-	z.fieldMap = make(map[string]field.Expr, 4)
+	z.fieldMap = make(map[string]field.Expr, 5)
 	z.fieldMap["id"] = z.ID
+	z.fieldMap["empresa_id"] = z.EmpresaID
 	z.fieldMap["color_linea"] = z.ColorLinea
 	z.fieldMap["color_relleno"] = z.ColorRelleno
 	z.fieldMap["puntos"] = z.Puntos

@@ -29,6 +29,7 @@ func newZonaVehiculo(db *gorm.DB) zonaVehiculo {
 	_zonaVehiculo.ALL = field.NewField(tableName, "*")
 	_zonaVehiculo.ID = field.NewInt32(tableName, "id")
 	_zonaVehiculo.ZonaID = field.NewInt32(tableName, "zona_id")
+	_zonaVehiculo.VehiculoID = field.NewInt32(tableName, "vehiculo_id")
 	_zonaVehiculo.AvisarEntrada = field.NewBool(tableName, "avisar_entrada")
 	_zonaVehiculo.AvisarSalida = field.NewBool(tableName, "avisar_salida")
 
@@ -43,6 +44,7 @@ type zonaVehiculo struct {
 	ALL           field.Field
 	ID            field.Int32
 	ZonaID        field.Int32
+	VehiculoID    field.Int32
 	AvisarEntrada field.Bool
 	AvisarSalida  field.Bool
 
@@ -63,6 +65,7 @@ func (z *zonaVehiculo) updateTableName(table string) *zonaVehiculo {
 	z.ALL = field.NewField(table, "*")
 	z.ID = field.NewInt32(table, "id")
 	z.ZonaID = field.NewInt32(table, "zona_id")
+	z.VehiculoID = field.NewInt32(table, "vehiculo_id")
 	z.AvisarEntrada = field.NewBool(table, "avisar_entrada")
 	z.AvisarSalida = field.NewBool(table, "avisar_salida")
 
@@ -81,9 +84,10 @@ func (z *zonaVehiculo) GetFieldByName(fieldName string) (field.OrderExpr, bool) 
 }
 
 func (z *zonaVehiculo) fillFieldMap() {
-	z.fieldMap = make(map[string]field.Expr, 4)
+	z.fieldMap = make(map[string]field.Expr, 5)
 	z.fieldMap["id"] = z.ID
 	z.fieldMap["zona_id"] = z.ZonaID
+	z.fieldMap["vehiculo_id"] = z.VehiculoID
 	z.fieldMap["avisar_entrada"] = z.AvisarEntrada
 	z.fieldMap["avisar_salida"] = z.AvisarSalida
 }
