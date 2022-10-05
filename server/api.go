@@ -87,7 +87,7 @@ func (api *api) GetZonesByEmpresaId(c echo.Context) error {
 }
 
 func (api *api) CreateZone(c echo.Context) error {
-	data := model.ZoneView{}
+	data := model.ZoneRequest{}
 	c.Bind(&data)
 
 	zoneErr := api.manager.CreateZone(data)
@@ -100,7 +100,7 @@ func (api *api) CreateZone(c echo.Context) error {
 }
 
 func (api *api) EditZoneById(c echo.Context) error {
-	data := model.ZoneView{}
+	data := model.ZoneRequest{}
 	c.Bind(&data)
 
 	val, _ := c.FormParams()

@@ -206,7 +206,7 @@ func (ma *Manager) GetZonesByEmpresaId(idParam string) ([]model.Zona, error) {
 	return zones, nil
 }
 
-func (ma *Manager) CreateZone(zoneView model.ZoneView) error {
+func (ma *Manager) CreateZone(zoneRequest model.ZoneRequest) error {
 	db, close, err := db.ObtenerConexionDb()
 	defer close()
 
@@ -215,18 +215,35 @@ func (ma *Manager) CreateZone(zoneView model.ZoneView) error {
 	}
 
 	zone := model.Zona{
-		EmpresaID:    int32(zoneView.EmpresaId),
-		ColorLinea:   zoneView.ColorLinea,
-		ColorRelleno: zoneView.ColorRelleno,
-		Puntos:       zoneView.Puntos,
-		Nombre:       zoneView.Nombre,
+		EmpresaID:    int32(zoneRequest.EmpresaId),
+		ColorLinea:   zoneRequest.ColorLinea,
+		ColorRelleno: zoneRequest.ColorRelleno,
+		Puntos:       zoneRequest.Puntos,
+		Nombre:       zoneRequest.Nombre,
 	}
+
 	tx := db.Create(&zone)
+
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	zoneVehicles := []model.ZonaVehiculo{}
+	for _, vehicleId := range zoneRequest.VehiculosIds {
+		zoneVehicles = append(zoneVehicles, model.ZonaVehiculo{
+			ZonaID:        zone.ID,
+			VehiculoID:    int32(vehicleId),
+			AvisarEntrada: zoneRequest.AvisarEntrada,
+			AvisarSalida:  zoneRequest.AvisarSalida,
+		})
+	}
+
+	tx = db.Create(&zoneVehicles)
 
 	return tx.Error
 }
 
-func (ma *Manager) EditZoneById(idParam string, zoneView model.ZoneView) error {
+func (ma *Manager) EditZoneById(idParam string, zoneView model.ZoneRequest) error {
 	db, close, err := db.ObtenerConexionDb()
 	defer close()
 

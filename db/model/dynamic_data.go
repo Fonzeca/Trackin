@@ -57,11 +57,20 @@ type ImeisBody struct {
 	Imeis []string `json:"imeis"`
 }
 
-type ZoneView struct {
-	Id           int32  `json:"id,omitempty"`
-	EmpresaId    int32  `json:"empresa_id,omitempty"`
-	ColorLinea   string `json:"color_linea,omitempty"`
-	ColorRelleno string `json:"color_relleno,omitempty"`
-	Puntos       string `json:"puntos,omitempty"`
-	Nombre       string `json:"nombre,omitempty"`
+type ZoneRequest struct {
+	EmpresaId     int32  `json:"empresa_id,omitempty"`
+	ColorLinea    string `json:"color_linea,omitempty"`
+	ColorRelleno  string `json:"color_relleno,omitempty"`
+	Puntos        string `json:"puntos,omitempty"`
+	Nombre        string `json:"nombre,omitempty"`
+	VehiculosIds  []int  `json:"vehiculos_ids,omitempty"`
+	AvisarEntrada bool   `json:"avisar_entrada,omitempty"`
+	AvisarSalida  bool   `json:"avisar_salida,omitempty"`
+}
+
+type ZoneVehiclesView struct {
+	ZonaID        bool    `json:"zona_id,omitempty"`
+	VehiculosId   []int32 `json:"vehiculos_ids,omitempty"`
+	AvisarEntrada bool    `json:"avisar_entrada,omitempty"`
+	AvisarSalida  bool    `json:"avisar_salida,omitempty"`
 }
