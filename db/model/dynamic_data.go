@@ -63,7 +63,7 @@ type ZoneRequest struct {
 	ColorRelleno  string `json:"color_relleno,omitempty"`
 	Puntos        string `json:"puntos,omitempty"`
 	Nombre        string `json:"nombre,omitempty"`
-	VehiculosIds  []int  `json:"vehiculos_ids,omitempty"`
+	VehiculosIds  []int  `json:"vehiculos_ids"`
 	AvisarEntrada bool   `json:"avisar_entrada,omitempty"`
 	AvisarSalida  bool   `json:"avisar_salida,omitempty"`
 }

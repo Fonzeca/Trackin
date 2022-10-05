@@ -185,7 +185,7 @@ func saveMovingLog(index int, fromDate string, fromHour string, id int32, routes
 	})
 }
 
-func (ma *Manager) GetZonesByEmpresaId(idParam string) ([]model.Zona, error) {
+func (ma *Manager) GetZonesByEmpresaId(idParam string) ([]model.ZoneRequest, error) {
 	db, close, err := db.ObtenerConexionDb()
 	defer close()
 
@@ -196,14 +196,28 @@ func (ma *Manager) GetZonesByEmpresaId(idParam string) ([]model.Zona, error) {
 	id, idParseErr := strconv.Atoi(idParam)
 
 	if idParseErr != nil {
-		return []model.Zona{}, idParseErr
+		return []model.ZoneRequest{}, idParseErr
 	}
 
 	zones := []model.Zona{}
 
 	db.Find(&zones).Where("empresa_id = ?", id)
+	tx := db.Model(&model.Zona{}).Joins("join zona_vehiculos on zona.id = zona_vehiculos.zona_id").Scan(&model.ZoneRequest{})
 
-	return zones, nil
+	zonesRequests := []model.ZoneRequest{}
+	for _, zone := range zonesRequests {
+		zonesRequests = append(zonesRequests, model.ZoneRequest{
+			EmpresaId:     zone.EmpresaId,
+			ColorLinea:    zone.ColorLinea,
+			ColorRelleno:  zone.ColorRelleno,
+			Puntos:        zone.Puntos,
+			Nombre:        zone.Nombre,
+			VehiculosIds:  zone.VehiculosIds,
+			AvisarEntrada: zone.AvisarEntrada,
+			AvisarSalida:  zone.AvisarSalida,
+		})
+	}
+	return zonesRequests, tx.Error
 }
 
 func (ma *Manager) CreateZone(zoneRequest model.ZoneRequest) error {
