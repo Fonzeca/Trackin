@@ -3,8 +3,8 @@ package model
 import "time"
 
 type Location struct {
-	Latitutd *float64 `json:"latitud,omitempty"`
-	Longitud *float64 `json:"longitud,omitempty"`
+	Latitutd float64 `json:"latitud,omitempty"`
+	Longitud float64 `json:"longitud,omitempty"`
 }
 
 type LastLogView struct {
@@ -17,8 +17,8 @@ type LastLogView struct {
 type StateLogView struct {
 	Imei string `json:"imei"`
 	Location
-	EngineStatus *bool  `json:"engine_status,omitempty"`
-	Azimuth      *int32 `json:"azimuth,omitempty"`
+	EngineStatus bool  `json:"engine_status"`
+	Azimuth      int32 `json:"azimuth,omitempty"`
 }
 
 type RouteView struct {
@@ -33,7 +33,7 @@ type RouteView struct {
 type RouteDataView struct {
 	Location
 	Speed   float32 `json:"speed"`
-	Azimuth *int32  `json:"azimuth,omitempty"`
+	Azimuth int32   `json:"azimuth,omitempty"`
 }
 
 type StopView struct {

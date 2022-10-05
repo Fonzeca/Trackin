@@ -103,7 +103,7 @@ func (ma *Manager) GetRouteByImei(requestRoute model.RouteRequest) ([]interface{
 	var initialMileage int32 = 0
 
 	for index, log := range logs {
-		if !*log.EngineStatus {
+		if !log.EngineStatus {
 
 			if isMoving {
 				isMoving = false
