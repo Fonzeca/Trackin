@@ -21,7 +21,7 @@ func NewDataEntryManager() *DataEntryManager {
 	return instance
 }
 
-//Goroutine daemon
+// Goroutine daemon
 func (d *DataEntryManager) run() {
 	for {
 		data := <-d.CanalEntrada
