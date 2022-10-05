@@ -218,7 +218,9 @@ func (ma *Manager) CreateZone(zoneView model.ZoneView) error {
 		EmpresaID:    int32(zoneView.EmpresaId),
 		ColorLinea:   zoneView.ColorLinea,
 		ColorRelleno: zoneView.ColorRelleno,
-		Puntos:       zoneView.Puntos}
+		Puntos:       zoneView.Puntos,
+		Nombre:       zoneView.Nombre,
+	}
 	tx := db.Create(&zone)
 
 	return tx.Error
@@ -243,7 +245,9 @@ func (ma *Manager) EditZoneById(idParam string, zoneView model.ZoneView) error {
 		EmpresaID:    int32(zoneView.EmpresaId),
 		ColorLinea:   zoneView.ColorLinea,
 		ColorRelleno: zoneView.ColorRelleno,
-		Puntos:       zoneView.Puntos}
+		Puntos:       zoneView.Puntos,
+		Nombre:       zoneView.Nombre,
+	}
 	tx := db.Save(&zone)
 
 	return tx.Error

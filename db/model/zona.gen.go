@@ -13,6 +13,7 @@ type Zona struct {
 	ColorLinea   string `gorm:"column:color_linea;not null" json:"color_linea"`
 	ColorRelleno string `gorm:"column:color_relleno;not null" json:"color_relleno"`
 	Puntos       string `gorm:"column:puntos;not null" json:"puntos"`
+	Nombre       string `gorm:"column:nombre;not null" json:"nombre"`
 }
 
 // TableName Zona's table name

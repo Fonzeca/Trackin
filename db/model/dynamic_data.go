@@ -63,4 +63,5 @@ type ZoneView struct {
 	ColorLinea   string `json:"color_linea,omitempty"`
 	ColorRelleno string `json:"color_relleno,omitempty"`
 	Puntos       string `json:"puntos,omitempty"`
+	Nombre       string `json:"nombre,omitempty"`
 }
