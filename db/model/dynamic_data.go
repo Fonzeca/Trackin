@@ -70,6 +70,7 @@ type ZoneView struct {
 }
 
 type ZoneRequest struct {
+	Id            int32  `json:"id,omitempty"`
 	EmpresaId     int32  `json:"empresa_id,omitempty"`
 	ColorLinea    string `json:"color_linea,omitempty"`
 	ColorRelleno  string `json:"color_relleno,omitempty"`

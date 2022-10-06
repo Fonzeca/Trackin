@@ -203,12 +203,17 @@ func (ma *Manager) GetZonesByEmpresaId(idParam string) ([]model.ZoneRequest, err
 
 	tx := db.Model(&model.Zona{}).Select("zona.id, zona.empresa_id, zona.color_linea, zona.color_relleno, zona.puntos, zona.nombre, zona_vehiculos.vehiculo_id, zona_vehiculos.avisar_entrada, zona_vehiculos.avisar_salida").Joins("join zona_vehiculos on zona.id = zona_vehiculos.zona_id").Where("empresa_id = ?", id).Order("zona.id desc").Scan(&zones)
 
-	zonesRequests := []model.ZoneRequest{}
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
 
-	var previousZoneId int32 = 0
+	zonesWithVehicles := []model.ZoneRequest{}
+
+	var previousZoneId int32 = -1
 	for i, zone := range zones {
 		if zone.Id != previousZoneId || i == 0 {
-			zonesRequests = append(zonesRequests, model.ZoneRequest{
+			zonesWithVehicles = append(zonesWithVehicles, model.ZoneRequest{
+				Id:            zone.Id,
 				EmpresaId:     zone.EmpresaId,
 				ColorLinea:    zone.ColorLinea,
 				ColorRelleno:  zone.ColorRelleno,
@@ -219,11 +224,33 @@ func (ma *Manager) GetZonesByEmpresaId(idParam string) ([]model.ZoneRequest, err
 				AvisarSalida:  zone.AvisarSalida,
 			})
 		} else {
-			zonesRequests[len(zonesRequests)-1].VehiculosIds = append(zonesRequests[len(zonesRequests)-1].VehiculosIds, int(zone.VehiculoId))
+			zonesWithVehicles[len(zonesWithVehicles)-1].VehiculosIds = append(zonesWithVehicles[len(zonesWithVehicles)-1].VehiculosIds, int(zone.VehiculoId))
 		}
 		previousZoneId = zone.Id
 	}
-	return zonesRequests, tx.Error
+
+	zones = []model.ZoneView{}
+
+	tx = db.Model(&model.Zona{}).Joins("left outer join zona_vehiculos on zona.id = zona_vehiculos.zona_id").Where("empresa_id = ? AND zona_vehiculos.zona_id is null", id).Order("id desc").Scan(&zones)
+
+	zonesWithoutVehciles := []model.ZoneRequest{}
+
+	for _, zone := range zones {
+		zonesWithoutVehciles = append(zonesWithoutVehciles, model.ZoneRequest{
+			Id:            zone.Id,
+			EmpresaId:     zone.EmpresaId,
+			ColorLinea:    zone.ColorLinea,
+			ColorRelleno:  zone.ColorRelleno,
+			Puntos:        zone.Puntos,
+			Nombre:        zone.Nombre,
+			VehiculosIds:  append(make([]int, 1), int(zone.VehiculoId)),
+			AvisarEntrada: zone.AvisarEntrada,
+			AvisarSalida:  zone.AvisarSalida,
+		})
+	}
+	zonesWithVehicles = append(zonesWithVehicles, zonesWithoutVehciles...)
+
+	return zonesWithVehicles, tx.Error
 }
 
 func (ma *Manager) CreateZone(zoneRequest model.ZoneRequest) error {
@@ -249,9 +276,9 @@ func (ma *Manager) CreateZone(zoneRequest model.ZoneRequest) error {
 	}
 
 	if len(zoneRequest.VehiculosIds) > 0 {
-		zoneVehicles := []model.ZonaVehiculo{}
+		zonesWithVehicles := []model.ZonaVehiculo{}
 		for _, vehicleId := range zoneRequest.VehiculosIds {
-			zoneVehicles = append(zoneVehicles, model.ZonaVehiculo{
+			zonesWithVehicles = append(zonesWithVehicles, model.ZonaVehiculo{
 				ZonaID:        zone.ID,
 				VehiculoID:    int32(vehicleId),
 				AvisarEntrada: zoneRequest.AvisarEntrada,
@@ -259,13 +286,13 @@ func (ma *Manager) CreateZone(zoneRequest model.ZoneRequest) error {
 			})
 		}
 
-		tx = db.Create(&zoneVehicles)
+		tx = db.Create(&zonesWithVehicles)
 	}
 
 	return tx.Error
 }
 
-func (ma *Manager) EditZoneById(idParam string, zoneView model.ZoneRequest) error {
+func (ma *Manager) EditZoneById(idParam string, zoneRequest model.ZoneRequest) error {
 	db, close, err := db.ObtenerConexionDb()
 	defer close()
 
@@ -281,13 +308,32 @@ func (ma *Manager) EditZoneById(idParam string, zoneView model.ZoneRequest) erro
 
 	zone := model.Zona{
 		ID:           int32(id),
-		EmpresaID:    int32(zoneView.EmpresaId),
-		ColorLinea:   zoneView.ColorLinea,
-		ColorRelleno: zoneView.ColorRelleno,
-		Puntos:       zoneView.Puntos,
-		Nombre:       zoneView.Nombre,
+		EmpresaID:    int32(zoneRequest.EmpresaId),
+		ColorLinea:   zoneRequest.ColorLinea,
+		ColorRelleno: zoneRequest.ColorRelleno,
+		Puntos:       zoneRequest.Puntos,
+		Nombre:       zoneRequest.Nombre,
 	}
 	tx := db.Save(&zone)
+
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	tx = db.Where("zona_id = ?", id).Delete(&model.ZonaVehiculo{})
+
+	if len(zoneRequest.VehiculosIds) > 0 {
+		zonesWithVehicles := []model.ZonaVehiculo{}
+		for _, vehicleId := range zoneRequest.VehiculosIds {
+			zonesWithVehicles = append(zonesWithVehicles, model.ZonaVehiculo{
+				ZonaID:        zone.ID,
+				VehiculoID:    int32(vehicleId),
+				AvisarEntrada: zoneRequest.AvisarEntrada,
+				AvisarSalida:  zoneRequest.AvisarSalida,
+			})
+		}
+		tx = db.Create(&zonesWithVehicles)
+	}
 
 	return tx.Error
 }
