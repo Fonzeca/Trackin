@@ -25,20 +25,20 @@ func NewDataEntryManager() *DataEntryManager {
 func (d *DataEntryManager) run() {
 	for {
 		data := <-d.CanalEntrada
-		processData(data)
+		d.ProcessData(data)
 	}
 }
 
-func processData(data json.SimplyData) {
+func (d *DataEntryManager) ProcessData(data json.SimplyData) error {
 	//Evitamos datos inecesarios que llegan por equivocacion.
 	if data.Latitude == 0 {
-		return
+		return nil
 	}
 
 	db, close, err := db.ObtenerConexionDb()
 	if err != nil {
 		//TODO: log error
-		return
+		return err
 	}
 	defer close()
 
@@ -63,7 +63,7 @@ func processData(data json.SimplyData) {
 
 	err = q.Create(&log)
 	if err != nil {
-		return
+		return err
 	}
-
+	return nil
 }

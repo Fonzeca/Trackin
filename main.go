@@ -1,16 +1,23 @@
 package main
 
 import (
-	"encoding/json"
+	"fmt"
 
 	"github.com/Fonzeca/Trackin/entry"
 	"github.com/Fonzeca/Trackin/server"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/labstack/gommon/log"
+	"github.com/spf13/viper"
+
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func main() {
+	InitConfig()
+	channel, closeFunc := setupRabbitMq()
+	defer closeFunc()
+	entry.NewRabbitMqDataEntry(channel)
+
 	e := echo.New()
 	entry.Router(e)
 
@@ -31,16 +38,31 @@ func main() {
 	e.Logger.Fatal(e.Start(":4762"))
 }
 
-func GetJSONRawBody(c echo.Context) map[string]interface{} {
+func setupRabbitMq() (*amqp.Channel, func()) {
+	// Create a new RabbitMQ connection.
 
-	jsonBody := make(map[string]interface{})
-	err := json.NewDecoder(c.Request().Body).Decode(&jsonBody)
-
+	connectRabbitMQ, err := amqp.Dial(viper.GetString("rabbitmq.url"))
 	if err != nil {
-
-		log.Error("empty json body")
-		return nil
+		panic(err)
 	}
 
-	return jsonBody
+	// Opening a channel to our RabbitMQ instance over
+	// the connection we have already established.
+	channelRabbitMQ, err := connectRabbitMQ.Channel()
+	if err != nil {
+		connectRabbitMQ.Close()
+		panic(err)
+	}
+
+	return channelRabbitMQ, func() { connectRabbitMQ.Close(); channelRabbitMQ.Close() }
+}
+
+func InitConfig() {
+	viper.SetConfigName("config.json")
+	viper.SetConfigType("json")
+	viper.AddConfigPath(".")
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("Fatal error config file: %w \n", err))
+	}
 }
