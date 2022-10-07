@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.16-alpine
+FROM golang:1.19-alpine
 
 WORKDIR /app
 
@@ -12,9 +12,7 @@ COPY . .
 
 RUN go build -o /trackin .
 
-RUN apk update && apk add --no-cache tzdata
 ENV TZ=America/Argentina/Buenos_Aires
-ENV DEBIAN_FRONTEND=noninteractive
 
 EXPOSE 4762
 
