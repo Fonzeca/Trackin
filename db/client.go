@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-//Sirve para obener el objeto para interactuar con la base de datos
+// Sirve para obener el objeto para interactuar con la base de datos
 func ObtenerConexionDb() (*gorm.DB, func() error, error) {
 	//Cambiarlo por Viper
 	host := os.Getenv("trackinDbHost")
@@ -24,7 +24,7 @@ func ObtenerConexionDb() (*gorm.DB, func() error, error) {
 		pass = "almacen.C12"
 	}
 
-	dsn := user + ":" + pass + "@tcp(" + host + ")/trackin?parseTime=True"
+	dsn := user + ":" + pass + "@tcp(" + host + ")/trackin?parseTime=false"
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, nil, err

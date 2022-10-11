@@ -1,7 +1,6 @@
 package manager
 
 import (
-	"log"
 	"time"
 
 	"github.com/Fonzeca/Trackin/db"
@@ -11,7 +10,6 @@ import (
 )
 
 var argTimeZone *time.Location
-var currentTimeZone *time.Location
 
 type DataEntryManager struct {
 	CanalEntrada chan json.SimplyData
@@ -19,15 +17,10 @@ type DataEntryManager struct {
 
 func setTimeZone() {
 	arg, errArg := time.LoadLocation("America/Argentina/Buenos_Aires")
-	current, errGMT := time.LoadLocation("GMT0")
 	if errArg != nil {
 		panic(errArg)
 	}
-	if errGMT != nil {
-		panic(errGMT)
-	}
 	argTimeZone = arg
-	currentTimeZone = current
 }
 
 func NewDataEntryManager() *DataEntryManager {
@@ -63,17 +56,12 @@ func (d *DataEntryManager) ProcessData(data json.SimplyData) error {
 	}
 	defer close()
 
-	log.Println(data.Date)
-	log.Println(data.Date.In(currentTimeZone))
-	log.Println(data.Date.In(argTimeZone))
-	log.Println(data.Date.In(currentTimeZone).In(argTimeZone))
-
 	log := model.Log{
 		Imei:         data.Imei,
 		ProtocolType: data.ProtocolType,
 		Latitud:      data.Latitude,
 		Longitud:     data.Longitude,
-		Date:         data.Date.In(currentTimeZone).In(argTimeZone),
+		Date:         data.Date.In(argTimeZone),
 		Speed:        data.Speed,
 		AnalogInput1: data.AnalogInput1,
 		DeviceTemp:   data.DeviceTemp,
