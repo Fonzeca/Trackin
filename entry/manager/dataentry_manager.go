@@ -1,14 +1,26 @@
 package manager
 
 import (
+	"time"
+
 	"github.com/Fonzeca/Trackin/db"
 	"github.com/Fonzeca/Trackin/db/model"
 	"github.com/Fonzeca/Trackin/db/query"
 	"github.com/Fonzeca/Trackin/entry/json"
 )
 
+var argTimeZone *time.Location
+
 type DataEntryManager struct {
 	CanalEntrada chan json.SimplyData
+}
+
+func setTimeZone() {
+	arg, err := time.LoadLocation("America/Argentina/Buenos_Aires")
+	if err != nil {
+		panic(err)
+	}
+	argTimeZone = arg
 }
 
 func NewDataEntryManager() *DataEntryManager {
@@ -17,6 +29,8 @@ func NewDataEntryManager() *DataEntryManager {
 	}
 
 	go instance.run()
+
+	setTimeZone()
 
 	return instance
 }
@@ -47,7 +61,7 @@ func (d *DataEntryManager) ProcessData(data json.SimplyData) error {
 		ProtocolType: data.ProtocolType,
 		Latitud:      data.Latitude,
 		Longitud:     data.Longitude,
-		Date:         data.Date,
+		Date:         data.Date.In(argTimeZone),
 		Speed:        data.Speed,
 		AnalogInput1: data.AnalogInput1,
 		DeviceTemp:   data.DeviceTemp,
