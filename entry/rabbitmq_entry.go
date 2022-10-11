@@ -16,7 +16,7 @@ type RabbitMqDataEntry struct {
 
 func NewRabbitMqDataEntry(channel *amqp.Channel) RabbitMqDataEntry {
 
-	q, err := channel.QueueDeclare("trackin", false, true, false, false, nil)
+	q, err := channel.QueueDeclare("trackin", true, false, false, false, nil)
 	if err != nil {
 		panic(err)
 	}
