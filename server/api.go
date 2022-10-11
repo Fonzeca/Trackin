@@ -13,12 +13,14 @@ func Router(c *echo.Echo) error {
 }
 
 type api struct {
-	manager manager.Manager
+	manager      manager.Manager
+	zonasManager manager.ZonasManager
 }
 
 func NewApi() api {
 	m := manager.NewManager()
-	return api{manager: m}
+	zonasManager := manager.NewZonasManager()
+	return api{manager: m, zonasManager: *zonasManager}
 }
 
 func (api *api) GetLastLogByImei(c echo.Context) error {
@@ -77,7 +79,7 @@ func (api *api) GetZonesByEmpresaId(c echo.Context) error {
 	val, _ := c.FormParams()
 	id := val.Get("id")
 
-	zones, zoneErr := api.manager.GetZonesByEmpresaId(id)
+	zones, zoneErr := api.zonasManager.GetZonesByEmpresaId(id)
 
 	if zoneErr != nil {
 		return c.JSON(http.StatusNotFound, zoneErr.Error())
@@ -90,7 +92,7 @@ func (api *api) CreateZone(c echo.Context) error {
 	data := model.ZoneRequest{}
 	c.Bind(&data)
 
-	zoneErr := api.manager.CreateZone(data)
+	zoneErr := api.zonasManager.CreateZone(data)
 
 	if zoneErr != nil {
 		return c.JSON(http.StatusBadRequest, zoneErr.Error())
@@ -106,7 +108,7 @@ func (api *api) EditZoneById(c echo.Context) error {
 	val, _ := c.FormParams()
 	id := val.Get("id")
 
-	zoneErr := api.manager.EditZoneById(id, data)
+	zoneErr := api.zonasManager.EditZoneById(id, data)
 
 	if zoneErr != nil {
 		return c.JSON(http.StatusBadRequest, zoneErr.Error())
@@ -119,7 +121,7 @@ func (api *api) DeleteZoneById(c echo.Context) error {
 	val, _ := c.FormParams()
 	id := val.Get("id")
 
-	zoneErr := api.manager.DeleteZoneById(id)
+	zoneErr := api.zonasManager.DeleteZoneById(id)
 
 	if zoneErr != nil {
 		return c.JSON(http.StatusBadRequest, zoneErr.Error())
