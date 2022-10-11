@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-//Sirve para obener el objeto para interactuar con la base de datos
+// Sirve para obener el objeto para interactuar con la base de datos
 func ObtenerConexionDb() (*gorm.DB, func() error, error) {
 	//Cambiarlo por Viper
 	host := os.Getenv("trackinDbHost")

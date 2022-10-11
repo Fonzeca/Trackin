@@ -16,9 +16,9 @@ type DataEntryManager struct {
 }
 
 func setTimeZone() {
-	arg, err := time.LoadLocation("America/Argentina/Buenos_Aires")
-	if err != nil {
-		panic(err)
+	arg, errArg := time.LoadLocation("America/Argentina/Buenos_Aires")
+	if errArg != nil {
+		panic(errArg)
 	}
 	argTimeZone = arg
 }
