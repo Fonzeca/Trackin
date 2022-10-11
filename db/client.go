@@ -24,7 +24,7 @@ func ObtenerConexionDb() (*gorm.DB, func() error, error) {
 		pass = "almacen.C12"
 	}
 
-	dsn := user + ":" + pass + "@tcp(" + host + ")/trackin?parseTime=False"
+	dsn := user + ":" + pass + "@tcp(" + host + ")/trackin?parseTime=True&loc=Local"
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, nil, err
