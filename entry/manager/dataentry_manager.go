@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"log"
 	"time"
 
 	"github.com/Fonzeca/Trackin/db"
@@ -61,6 +62,11 @@ func (d *DataEntryManager) ProcessData(data json.SimplyData) error {
 		return err
 	}
 	defer close()
+
+	log.Println(data.Date)
+	log.Println(data.Date.In(currentTimeZone))
+	log.Println(data.Date.In(argTimeZone))
+	log.Println(data.Date.In(currentTimeZone).In(argTimeZone))
 
 	log := model.Log{
 		Imei:         data.Imei,
