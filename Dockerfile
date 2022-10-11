@@ -10,7 +10,7 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o /trackin ./
+RUN go build -o /trackin .
 
 ENV TZ=America/Argentina/Buenos_Aires
 
