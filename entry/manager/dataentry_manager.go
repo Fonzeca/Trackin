@@ -10,17 +10,23 @@ import (
 )
 
 var argTimeZone *time.Location
+var currentTimeZone *time.Location
 
 type DataEntryManager struct {
 	CanalEntrada chan json.SimplyData
 }
 
 func setTimeZone() {
-	arg, err := time.LoadLocation("America/Argentina/Buenos_Aires")
-	if err != nil {
-		panic(err)
+	arg, errArg := time.LoadLocation("America/Argentina/Buenos_Aires")
+	current, errGMT := time.LoadLocation("GMT0")
+	if errArg != nil {
+		panic(errArg)
+	}
+	if errGMT != nil {
+		panic(errGMT)
 	}
 	argTimeZone = arg
+	currentTimeZone = current
 }
 
 func NewDataEntryManager() *DataEntryManager {
@@ -61,7 +67,7 @@ func (d *DataEntryManager) ProcessData(data json.SimplyData) error {
 		ProtocolType: data.ProtocolType,
 		Latitud:      data.Latitude,
 		Longitud:     data.Longitude,
-		Date:         data.Date.In(argTimeZone),
+		Date:         data.Date.In(currentTimeZone).In(argTimeZone),
 		Speed:        data.Speed,
 		AnalogInput1: data.AnalogInput1,
 		DeviceTemp:   data.DeviceTemp,
