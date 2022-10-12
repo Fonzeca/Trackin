@@ -5,6 +5,7 @@ import (
 
 	"github.com/Fonzeca/Trackin/db"
 	"github.com/Fonzeca/Trackin/db/model"
+	"gorm.io/gorm"
 )
 
 type ZonasManager struct {
@@ -90,35 +91,39 @@ func (ma *ZonasManager) CreateZone(zoneRequest model.ZoneRequest) error {
 		return err
 	}
 
-	zone := model.Zona{
-		EmpresaID:    int32(zoneRequest.EmpresaId),
-		ColorLinea:   zoneRequest.ColorLinea,
-		ColorRelleno: zoneRequest.ColorRelleno,
-		Puntos:       zoneRequest.Puntos,
-		Nombre:       zoneRequest.Nombre,
-	}
+	transactionErr := db.Transaction(func(tx *gorm.DB) error {
 
-	tx := db.Create(&zone)
-
-	if tx.Error != nil {
-		return tx.Error
-	}
-
-	if len(zoneRequest.Imeis) > 0 {
-		zonesWithVehicles := []model.ZonaVehiculo{}
-		for _, imei := range zoneRequest.Imeis {
-			zonesWithVehicles = append(zonesWithVehicles, model.ZonaVehiculo{
-				ZonaID:        zone.ID,
-				Imei:          imei,
-				AvisarEntrada: zoneRequest.AvisarEntrada,
-				AvisarSalida:  zoneRequest.AvisarSalida,
-			})
+		zone := model.Zona{
+			EmpresaID:    int32(zoneRequest.EmpresaId),
+			ColorLinea:   zoneRequest.ColorLinea,
+			ColorRelleno: zoneRequest.ColorRelleno,
+			Puntos:       zoneRequest.Puntos,
+			Nombre:       zoneRequest.Nombre,
 		}
 
-		tx = db.Create(&zonesWithVehicles)
-	}
+		if err := tx.Create(&zone).Error; err != nil {
+			return err
+		}
 
-	return tx.Error
+		if len(zoneRequest.Imeis) > 0 {
+			zonesWithVehicles := []model.ZonaVehiculo{}
+			for _, imei := range zoneRequest.Imeis {
+				zonesWithVehicles = append(zonesWithVehicles, model.ZonaVehiculo{
+					ZonaID:        zone.ID,
+					Imei:          imei,
+					AvisarEntrada: zoneRequest.AvisarEntrada,
+					AvisarSalida:  zoneRequest.AvisarSalida,
+				})
+			}
+
+			if err := tx.Create(&zonesWithVehicles).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+	return transactionErr
 }
 
 func (ma *ZonasManager) EditZoneById(idParam string, zoneRequest model.ZoneRequest) error {
