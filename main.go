@@ -5,18 +5,17 @@ import (
 
 	"github.com/Fonzeca/Trackin/entry"
 	"github.com/Fonzeca/Trackin/server"
+	"github.com/Fonzeca/Trackin/services"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/viper"
-
-	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func main() {
 	InitConfig()
-	channel, closeFunc := setupRabbitMq()
+	_, closeFunc := services.SetupRabbitMq()
 	defer closeFunc()
-	entry.NewRabbitMqDataEntry(channel)
+	entry.NewRabbitMqDataEntry()
 
 	e := echo.New()
 	entry.Router(e)
@@ -36,25 +35,6 @@ func main() {
 	e.DELETE("/deleteZoneById", api.DeleteZoneById)
 
 	e.Logger.Fatal(e.Start(":4762"))
-}
-
-func setupRabbitMq() (*amqp.Channel, func()) {
-	// Create a new RabbitMQ connection.
-
-	connectRabbitMQ, err := amqp.Dial(viper.GetString("rabbitmq.url"))
-	if err != nil {
-		panic(err)
-	}
-
-	// Opening a channel to our RabbitMQ instance over
-	// the connection we have already established.
-	channelRabbitMQ, err := connectRabbitMQ.Channel()
-	if err != nil {
-		connectRabbitMQ.Close()
-		panic(err)
-	}
-
-	return channelRabbitMQ, func() { connectRabbitMQ.Close(); channelRabbitMQ.Close() }
 }
 
 func InitConfig() {

@@ -6,6 +6,7 @@ import (
 	"log"
 
 	model_json "github.com/Fonzeca/Trackin/entry/json"
+	"github.com/Fonzeca/Trackin/services"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -14,7 +15,8 @@ type RabbitMqDataEntry struct {
 	inputs <-chan amqp.Delivery
 }
 
-func NewRabbitMqDataEntry(channel *amqp.Channel) RabbitMqDataEntry {
+func NewRabbitMqDataEntry() RabbitMqDataEntry {
+	channel := services.GlobalChannel
 
 	q, err := channel.QueueDeclare("trackin", true, false, false, false, nil)
 	if err != nil {
