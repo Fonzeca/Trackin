@@ -12,7 +12,8 @@ import (
 var argTimeZone *time.Location
 
 type DataEntryManager struct {
-	CanalEntrada chan json.SimplyData
+	CanalEntrada    chan json.SimplyData
+	geofenceService GeofenceDetector
 }
 
 func setTimeZone() {
@@ -25,7 +26,8 @@ func setTimeZone() {
 
 func NewDataEntryManager() *DataEntryManager {
 	instance := &DataEntryManager{
-		CanalEntrada: make(chan json.SimplyData),
+		CanalEntrada:    make(chan json.SimplyData),
+		geofenceService: *NewGeofenceDetector(),
 	}
 
 	go instance.run()
@@ -79,5 +81,8 @@ func (d *DataEntryManager) ProcessData(data json.SimplyData) error {
 	if err != nil {
 		return err
 	}
+
+	go d.geofenceService.ProcessData(data)
+
 	return nil
 }
