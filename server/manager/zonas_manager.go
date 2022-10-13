@@ -32,15 +32,7 @@ func (ma *ZonasManager) GetZonesByEmpresaId(idParam string) ([]model.ZoneRequest
 
 	zones := []model.ZoneView{}
 
-	
-
-	db.Model(&model.Zona{}).Where("empresa_id = ?", id).Scan()
-
-	tx := db.Model(&model.Zona{}).Select("zona.id, zona.empresa_id, zona.color_linea, zona.color_relleno, zona.puntos, zona.nombre, zona_vehiculos.imei, zona_vehiculos.avisar_entrada, zona_vehiculos.avisar_salida")
-		.Joins("join zona_vehiculos on zona.id = zona_vehiculos.zona_id")
-		.Where("empresa_id = ?", id)
-		.Order("zona.id desc")
-		.Scan(&zones)
+	tx := db.Model(&model.Zona{}).Select("zona.id, zona.empresa_id, zona.color_linea, zona.color_relleno, zona.puntos, zona.nombre, zona_vehiculos.imei, zona_vehiculos.avisar_entrada, zona_vehiculos.avisar_salida").Joins("join zona_vehiculos on zona.id = zona_vehiculos.zona_id").Where("empresa_id = ?", id).Order("zona.id desc").Scan(&zones)
 
 	if tx.Error != nil {
 		return nil, tx.Error
@@ -202,12 +194,18 @@ func (ma *ZonasManager) DeleteZoneById(idParam string) error {
 	return tx.Error
 }
 
-// func (ma *ZonasManager) GetZoneConfigByImei(imei string) (model.ZoneRequest, error) {
-// 	db, close, err := db.ObtenerConexionDb()
-// 	defer close()
+func (ma *ZonasManager) GetZoneConfigByImei(imei string) ([]model.ZoneView, error) {
+	db, close, err := db.ObtenerConexionDb()
+	defer close()
 
-// 	if err != nil {
-// 		return model.ZoneRequest{}, err
-// 	}
+	zoneConfig := []model.ZoneView{}
 
-// }
+	tx := db.Model(&model.ZonaVehiculo{}).Select("zona.puntos, zona.nombre, zona.id, zona_vehiculos.avisar_entrada, zona_vehiculos.avisar_salida").Joins("join zona on zona.id = zona_vehiculos.zona_id").Where("imei = ?", imei).Scan(&zoneConfig)
+
+	if err != nil {
+		return []model.ZoneView{}, err
+	}
+
+	return zoneConfig, tx.Error
+
+}
