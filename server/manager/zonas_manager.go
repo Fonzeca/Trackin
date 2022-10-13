@@ -23,6 +23,7 @@ func (ma *ZonasManager) GetZonesByEmpresaId(idParam string) ([]model.ZoneRequest
 		return nil, err
 	}
 
+	//Scamos el id de la empresa
 	id, idParseErr := strconv.Atoi(idParam)
 
 	if idParseErr != nil {
@@ -31,7 +32,15 @@ func (ma *ZonasManager) GetZonesByEmpresaId(idParam string) ([]model.ZoneRequest
 
 	zones := []model.ZoneView{}
 
-	tx := db.Model(&model.Zona{}).Select("zona.id, zona.empresa_id, zona.color_linea, zona.color_relleno, zona.puntos, zona.nombre, zona_vehiculos.imei, zona_vehiculos.avisar_entrada, zona_vehiculos.avisar_salida").Joins("join zona_vehiculos on zona.id = zona_vehiculos.zona_id").Where("empresa_id = ?", id).Order("zona.id desc").Scan(&zones)
+	
+
+	db.Model(&model.Zona{}).Where("empresa_id = ?", id).Scan()
+
+	tx := db.Model(&model.Zona{}).Select("zona.id, zona.empresa_id, zona.color_linea, zona.color_relleno, zona.puntos, zona.nombre, zona_vehiculos.imei, zona_vehiculos.avisar_entrada, zona_vehiculos.avisar_salida")
+		.Joins("join zona_vehiculos on zona.id = zona_vehiculos.zona_id")
+		.Where("empresa_id = ?", id)
+		.Order("zona.id desc")
+		.Scan(&zones)
 
 	if tx.Error != nil {
 		return nil, tx.Error
