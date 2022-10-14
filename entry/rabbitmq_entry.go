@@ -45,6 +45,8 @@ func NewRabbitMqDataEntry() RabbitMqDataEntry {
 		log.Println(err)
 	}
 
+	channel.Qos(1, 0, false)
+
 	instance := RabbitMqDataEntry{inputs: messages}
 	go instance.Run()
 	return instance
