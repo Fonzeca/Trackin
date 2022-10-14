@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strconv"
+	"time"
 
 	"github.com/Fonzeca/Trackin/db"
 	model_json "github.com/Fonzeca/Trackin/entry/json"
@@ -58,6 +60,8 @@ func (m *RabbitMqDataEntry) Run() {
 
 		switch message.RoutingKey {
 		case "trackin.data.log.decoded":
+			fmt.Println("Read :" + message.MessageId + " --- Time:" + strconv.FormatInt(time.Now().UnixMicro(), 10))
+
 			pojo := model_json.SimplyData{}
 			err := json.Unmarshal(message.Body, &pojo)
 			if err != nil {
@@ -72,7 +76,7 @@ func (m *RabbitMqDataEntry) Run() {
 				fmt.Println(err)
 				break
 			}
-
+			fmt.Println("Finish read :" + message.MessageId + " --- Time:" + strconv.FormatInt(time.Now().UnixMicro(), 10))
 			message.Ack(false)
 			break
 		}

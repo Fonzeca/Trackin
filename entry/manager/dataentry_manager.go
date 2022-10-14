@@ -58,7 +58,7 @@ func (d *DataEntryManager) ProcessData(data json.SimplyData, db *gorm.DB) error 
 
 	q := query.Use(db).Log
 
-	err = q.Create(&log)
+	err := q.Create(&log)
 	if err != nil {
 		return err
 	}
