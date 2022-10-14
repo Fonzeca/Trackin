@@ -5,6 +5,7 @@ import (
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 // Sirve para obener el objeto para interactuar con la base de datos
@@ -25,7 +26,9 @@ func ObtenerConexionDb() (*gorm.DB, func() error, error) {
 	}
 
 	dsn := user + ":" + pass + "@tcp(" + host + ")/trackin?parseTime=True"
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
 	if err != nil {
 		return nil, nil, err
 	}
