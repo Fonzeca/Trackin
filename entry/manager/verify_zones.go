@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
@@ -35,7 +36,7 @@ func NewGeofenceDetector() *GeofenceDetector {
 
 func (d *GeofenceDetector) ProcessData(data json.SimplyData) error {
 
-	print("procesando " + data.Imei)
+	fmt.Println("ZonesManager: Procesando " + data.Imei)
 
 	imei := data.Imei
 
@@ -83,6 +84,7 @@ func (d *GeofenceDetector) ProcessData(data json.SimplyData) error {
 		var zoneNotification *model.ZoneNotification
 		if zoneConfig.AvisarEntrada {
 			if isCurrentVehiclePointInZone && !isOldVehiclePointInZone {
+				fmt.Println("Entro! : " + imei)
 				zoneNotification = &model.ZoneNotification{
 					Imei:      imei,
 					ZoneName:  zoneConfig.Nombre,
@@ -92,6 +94,7 @@ func (d *GeofenceDetector) ProcessData(data json.SimplyData) error {
 			}
 		} else if zoneConfig.AvisarSalida {
 			if !isCurrentVehiclePointInZone && isOldVehiclePointInZone {
+				fmt.Println("Salio! : " + imei)
 				zoneNotification = &model.ZoneNotification{
 					Imei:      imei,
 					ZoneName:  zoneConfig.Nombre,
@@ -103,10 +106,12 @@ func (d *GeofenceDetector) ProcessData(data json.SimplyData) error {
 
 		if zoneNotification != nil {
 			zoneNotificationBytes, _ := jsonEncoder.Marshal(zoneNotification)
+			fmt.Println("Por manadar message:" + imei)
 			services.GlobalChannel.PublishWithContext(context.Background(), "carmind", "notification.zone.back.preparing", true, true, amqp091.Publishing{
 				ContentType: "application/json",
 				Body:        zoneNotificationBytes,
 			})
+			fmt.Println("Mensaje mandando:" + imei)
 		}
 
 	}

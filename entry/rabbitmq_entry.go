@@ -59,6 +59,8 @@ func (m *RabbitMqDataEntry) Run() {
 				break
 			}
 
+			pojo.PayLoad = string(message.Body)
+
 			err = DataEntryManager.ProcessData(pojo)
 			if err != nil {
 				fmt.Println(err)
