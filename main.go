@@ -18,7 +18,6 @@ func main() {
 	entry.NewRabbitMqDataEntry()
 
 	e := echo.New()
-	entry.Router(e)
 
 	api := server.NewApi()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
