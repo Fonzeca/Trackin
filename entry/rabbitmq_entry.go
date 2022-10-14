@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/Fonzeca/Trackin/db"
 	model_json "github.com/Fonzeca/Trackin/entry/json"
 	"github.com/Fonzeca/Trackin/services"
 
@@ -48,6 +49,11 @@ func NewRabbitMqDataEntry() RabbitMqDataEntry {
 }
 
 func (m *RabbitMqDataEntry) Run() {
+	db, close, err := db.ObtenerConexionDb()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer close()
 	for message := range m.inputs {
 
 		switch message.RoutingKey {
@@ -61,7 +67,7 @@ func (m *RabbitMqDataEntry) Run() {
 
 			pojo.PayLoad = string(message.Body)
 
-			err = DataEntryManager.ProcessData(pojo)
+			err = DataEntryManager.ProcessData(pojo, db)
 			if err != nil {
 				fmt.Println(err)
 				break

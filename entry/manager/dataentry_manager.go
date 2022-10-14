@@ -3,16 +3,15 @@ package manager
 import (
 	"time"
 
-	"github.com/Fonzeca/Trackin/db"
 	"github.com/Fonzeca/Trackin/db/model"
 	"github.com/Fonzeca/Trackin/db/query"
 	"github.com/Fonzeca/Trackin/entry/json"
+	"gorm.io/gorm"
 )
 
 var argTimeZone *time.Location
 
 type DataEntryManager struct {
-	CanalEntrada    chan json.SimplyData
 	geofenceService GeofenceDetector
 }
 
@@ -26,37 +25,19 @@ func setTimeZone() {
 
 func NewDataEntryManager() *DataEntryManager {
 	instance := &DataEntryManager{
-		CanalEntrada:    make(chan json.SimplyData),
 		geofenceService: *NewGeofenceDetector(),
 	}
-
-	go instance.run()
 
 	setTimeZone()
 
 	return instance
 }
 
-// Goroutine daemon
-func (d *DataEntryManager) run() {
-	for {
-		data := <-d.CanalEntrada
-		d.ProcessData(data)
-	}
-}
-
-func (d *DataEntryManager) ProcessData(data json.SimplyData) error {
+func (d *DataEntryManager) ProcessData(data json.SimplyData, db *gorm.DB) error {
 	//Evitamos datos inecesarios que llegan por equivocacion.
 	if data.Latitude == 0 {
 		return nil
 	}
-
-	db, close, err := db.ObtenerConexionDb()
-	if err != nil {
-		//TODO: log error
-		return err
-	}
-	defer close()
 
 	log := model.Log{
 		Imei:         data.Imei,
