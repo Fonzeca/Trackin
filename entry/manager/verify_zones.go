@@ -3,6 +3,7 @@ package manager
 import (
 	"context"
 	"fmt"
+	"log"
 	"math"
 	"strconv"
 	"strings"
@@ -109,10 +110,13 @@ func (d *GeofenceDetector) ProcessData(data json.SimplyData) error {
 		if zoneNotification != nil {
 			zoneNotificationBytes, _ := jsonEncoder.Marshal(zoneNotification)
 			fmt.Println("Por manadar message:" + imei)
-			services.GlobalChannel.PublishWithContext(context.Background(), "carmind", "notification.zone.back.preparing", true, true, amqp091.Publishing{
+			err := services.GlobalChannel.PublishWithContext(context.Background(), "carmind", "notification.zone.back.preparing", true, true, amqp091.Publishing{
 				ContentType: "application/json",
 				Body:        zoneNotificationBytes,
 			})
+			if err != nil {
+				log.Fatalln(err)
+			}
 			fmt.Println("Mensaje mandando:" + imei)
 		}
 
