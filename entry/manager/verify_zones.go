@@ -92,7 +92,9 @@ func (d *GeofenceDetector) ProcessData(data json.SimplyData) error {
 					EventType: "entra",
 				}
 			}
-		} else if zoneConfig.AvisarSalida {
+		}
+
+		if zoneConfig.AvisarSalida {
 			if !isCurrentVehiclePointInZone && isOldVehiclePointInZone {
 				fmt.Println("Salio! : " + imei)
 				zoneNotification = &model.ZoneNotification{
@@ -115,7 +117,7 @@ func (d *GeofenceDetector) ProcessData(data json.SimplyData) error {
 		}
 
 	}
-
+	d.last_logs[imei] = currentVehiclePoint
 	return nil
 }
 
@@ -156,15 +158,66 @@ func isPointInPolygon(p Point, polygon []Point) bool {
 		return false
 	}
 
-	var isInside bool = false
+	start := len(polygon) - 1
+	end := 0
 
-	j := len(polygon) - 1
-	for i := 0; i < len(polygon); j = i + 1 {
-		if (polygon[i].lng > p.lng) != (polygon[j].lng > p.lng) &&
-			p.lat < (polygon[j].lat-polygon[i].lat)*(p.lng-polygon[i].lng)/(polygon[j].lng-polygon[i].lng)+polygon[i].lat {
-			isInside = !isInside
+	contains := intersectsWithRaycast(&p, &polygon[start], &polygon[end])
+
+	for i := 1; i < len(polygon); i++ {
+		if intersectsWithRaycast(&p, &polygon[i-1], &polygon[i]) {
+			contains = !contains
 		}
 	}
 
-	return isInside
+	return contains
+}
+
+// Using the raycast algorithm, this returns whether or not the passed in point
+// Intersects with the edge drawn by the passed in start and end points.
+// Original implementation: http://rosettacode.org/wiki/Ray-casting_algorithm#Go
+func intersectsWithRaycast(point *Point, start *Point, end *Point) bool {
+	// Always ensure that the the first point
+	// has a y coordinate that is less than the second point
+	if start.lng > end.lng {
+
+		// Switch the points if otherwise.
+		start, end = end, start
+
+	}
+
+	// Move the point's y coordinate
+	// outside of the bounds of the testing region
+	// so we can start drawing a ray
+	for point.lng == start.lng || point.lng == end.lng {
+		newLng := math.Nextafter(point.lng, math.Inf(1))
+		point = &Point{lat: point.lat, lng: newLng}
+
+	}
+
+	// If we are outside of the polygon, indicate so.
+	if point.lng < start.lng || point.lng > end.lng {
+		return false
+	}
+
+	if start.lat > end.lat {
+		if point.lat > start.lat {
+			return false
+		}
+		if point.lat < end.lat {
+			return true
+		}
+
+	} else {
+		if point.lat > end.lat {
+			return false
+		}
+		if point.lat < start.lat {
+			return true
+		}
+	}
+
+	raySlope := (point.lng - start.lng) / (point.lat - start.lat)
+	diagSlope := (end.lng - start.lng) / (end.lat - start.lat)
+
+	return raySlope >= diagSlope
 }

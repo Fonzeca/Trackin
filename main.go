@@ -13,6 +13,7 @@ import (
 
 func main() {
 	InitConfig()
+	// go monitor.System()
 	_, closeFunc := services.SetupRabbitMq()
 	defer closeFunc()
 	entry.NewRabbitMqDataEntry()
