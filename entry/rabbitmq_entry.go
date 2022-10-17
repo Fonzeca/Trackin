@@ -43,11 +43,6 @@ func NewRabbitMqDataEntry() RabbitMqDataEntry {
 		log.Println(err)
 	}
 
-	err = channel.Qos(1, 0, false)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	instance := RabbitMqDataEntry{inputs: messages}
 	go instance.Run()
 	return instance

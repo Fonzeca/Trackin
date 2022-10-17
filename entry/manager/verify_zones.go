@@ -110,7 +110,7 @@ func (d *GeofenceDetector) ProcessData(data json.SimplyData) error {
 		if zoneNotification != nil {
 			zoneNotificationBytes, _ := jsonEncoder.Marshal(zoneNotification)
 			fmt.Println("Por manadar message:" + imei)
-			err := services.GlobalChannel.PublishWithContext(context.Background(), "carmind", "notification.zone.back.preparing", true, true, amqp091.Publishing{
+			err := services.GlobalChannel.PublishWithContext(context.Background(), "carmind", "notification.zone.back.preparing", false, false, amqp091.Publishing{
 				ContentType: "application/json",
 				Body:        zoneNotificationBytes,
 			})
