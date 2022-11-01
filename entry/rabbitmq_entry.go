@@ -17,7 +17,7 @@ type RabbitMqDataEntry struct {
 }
 
 func NewRabbitMqDataEntry() RabbitMqDataEntry {
-	channel := services.GlobalChannel
+	channel := services.GlobalRabbitChannel
 
 	q, err := channel.QueueDeclare("trackin", true, false, false, false, nil)
 	if err != nil {

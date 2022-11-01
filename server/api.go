@@ -14,13 +14,13 @@ func Router(c *echo.Echo) error {
 
 type api struct {
 	manager      manager.Manager
-	zonasManager manager.ZonasManager
+	zonasManager manager.IZonasManager
 }
 
 func NewApi() api {
 	m := manager.NewManager()
-	zonasManager := manager.NewZonasManager()
-	return api{manager: m, zonasManager: *zonasManager}
+	zonasManager := manager.ZonasManager
+	return api{manager: m, zonasManager: zonasManager}
 }
 
 func (api *api) GetLastLogByImei(c echo.Context) error {

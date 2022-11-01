@@ -7,6 +7,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"time"
 
 	jsonEncoder "encoding/json"
 
@@ -14,115 +15,143 @@ import (
 	"github.com/Fonzeca/Trackin/entry/json"
 	"github.com/Fonzeca/Trackin/server/manager"
 	"github.com/Fonzeca/Trackin/services"
-	"github.com/rabbitmq/amqp091-go"
 )
 
 type Point struct {
-	lat float64
-	lng float64
+	lat  float64
+	lng  float64
+	date time.Time
 }
 
 type GeofenceDetector struct {
 	last_logs map[string]Point
-	manager   manager.ZonasManager
+
+	imeisChannels map[string]chan json.SimplyData
+	manager       manager.IZonasManager
 }
 
 func NewGeofenceDetector() *GeofenceDetector {
-	zm := manager.NewZonasManager()
+	zm := manager.ZonasManager
 	return &GeofenceDetector{
-		manager:   *zm,
-		last_logs: make(map[string]Point),
+		manager:       zm,
+		last_logs:     make(map[string]Point),
+		imeisChannels: make(map[string]chan json.SimplyData),
 	}
 }
 
-func (d *GeofenceDetector) ProcessData(data json.SimplyData) error {
-
-	fmt.Println("ZonesManager: Procesando " + data.Imei)
-
-	imei := data.Imei
-
-	//Punto del imei viejo
-	oldVehiclePoint, ok := d.last_logs[imei]
-
-	//Punto del imei nuevo
-	var currentVehiclePoint Point = Point{lat: data.Latitude, lng: data.Longitude}
-
-	//Verificamos si existe el punto viejo
-	if !ok {
-		d.last_logs[imei] = currentVehiclePoint
-		return nil
+func (d *GeofenceDetector) DispatchMessage(data json.SimplyData) {
+	if data.EngineStatus {
+		if _, ok := d.imeisChannels[data.Imei]; !ok {
+			newChannel := make(chan json.SimplyData)
+			d.imeisChannels[data.Imei] = newChannel
+			go d.Worker(newChannel, data.Imei)
+		}
+		d.imeisChannels[data.Imei] <- data
+	} else {
+		if channel, ok := d.imeisChannels[data.Imei]; ok {
+			data.CloseChannel = true
+			channel <- data
+		}
 	}
+}
+
+func (d *GeofenceDetector) Worker(channel chan json.SimplyData, imei string) {
+	defer func() {
+		d.imeisChannels[imei] = nil
+		delete(d.imeisChannels, imei)
+		close(channel)
+	}()
 
 	//Obtenemos la config del imei con la zona
-	zonesConfig, err := d.manager.GetZoneConfigByImei(imei)
-	if err != nil {
-		return err
-	}
-
-	if len(zonesConfig) <= 0 {
+	zonesConfig, _ := d.manager.GetZoneConfigByImei(imei)
+	if zonesConfig != nil && len(zonesConfig) <= 0 {
 		//El vehiculo no está asociado a ninguna zona, por lo tanto no hacemos nada
-		return nil
+		return
 	}
+	go func() {
+		time.Sleep(5 * time.Second)
+		for {
+			zonesConfig, _ = d.manager.GetZoneConfigByImei(imei)
+		}
+	}()
 
-	//Recorremos cada zona que tiene asignado el imei
-	for _, zoneConfig := range zonesConfig {
+	var oldVehiclePoint *Point
 
-		//Si el vehíuclo no tiene que avisar nada en una zona, salteamos la zona
-		if !zoneConfig.AvisarEntrada || !zoneConfig.AvisarSalida {
+	for {
+		data := <-channel
+
+		var currentVehiclePoint *Point = &Point{lat: data.Latitude, lng: data.Longitude, date: data.Date}
+		if oldVehiclePoint == nil {
+			oldVehiclePoint = currentVehiclePoint
 			continue
 		}
 
-		//Obtenemos los puntos del poligono de la zona, porque estan almacenados como un string
-		polygon, err := getPolygonFromString(zoneConfig.Puntos)
-		if err != nil {
-			return err
+		//Siempre los nuevos puntos tienen que ser de un date mayor al old
+		if currentVehiclePoint.date.Before(oldVehiclePoint.date) {
+			//Esto significa que es viejo
+			continue
 		}
 
-		//Verificamos los 2 puntos, si estan adentro de la zona
-		var isCurrentVehiclePointInZone bool = isPointInPolygon(currentVehiclePoint, polygon)
-		var isOldVehiclePointInZone bool = isPointInPolygon(oldVehiclePoint, polygon)
-
-		var zoneNotification *model.ZoneNotification
-		if zoneConfig.AvisarEntrada {
-			if isCurrentVehiclePointInZone && !isOldVehiclePointInZone {
-				fmt.Println("Entro! : " + imei)
-				zoneNotification = &model.ZoneNotification{
-					Imei:      imei,
-					ZoneName:  zoneConfig.Nombre,
-					ZoneID:    int(zoneConfig.Id),
-					EventType: "entra",
-				}
+		for _, zoneConfig := range zonesConfig {
+			//Si el vehíuclo no tiene que avisar nada en una zona, salteamos la zona
+			if !zoneConfig.AvisarEntrada || !zoneConfig.AvisarSalida {
+				continue
 			}
-		}
 
-		if zoneConfig.AvisarSalida {
-			if !isCurrentVehiclePointInZone && isOldVehiclePointInZone {
-				fmt.Println("Salio! : " + imei)
-				zoneNotification = &model.ZoneNotification{
-					Imei:      imei,
-					ZoneName:  zoneConfig.Nombre,
-					ZoneID:    int(zoneConfig.Id),
-					EventType: "sale",
-				}
-			}
-		}
-
-		if zoneNotification != nil {
-			zoneNotificationBytes, _ := jsonEncoder.Marshal(zoneNotification)
-			fmt.Println("Por manadar message:" + imei)
-			err := services.GlobalChannel.PublishWithContext(context.Background(), "carmind", "notification.zone.back.preparing", false, false, amqp091.Publishing{
-				ContentType: "application/json",
-				Body:        zoneNotificationBytes,
-			})
+			//Obtenemos los puntos del poligono de la zona, porque estan almacenados como un string
+			polygon, err := getPolygonFromString(zoneConfig.Puntos)
 			if err != nil {
-				log.Fatalln(err)
+				fmt.Println(err)
+				continue
 			}
-			fmt.Println("Mensaje mandando:" + imei)
+
+			//Verificamos los 2 puntos, si estan adentro de la zona
+			var isCurrentVehiclePointInZone bool = isPointInPolygon(*currentVehiclePoint, polygon)
+			var isOldVehiclePointInZone bool = isPointInPolygon(*oldVehiclePoint, polygon)
+
+			var zoneNotification *model.ZoneNotification
+			if zoneConfig.AvisarEntrada {
+				if isCurrentVehiclePointInZone && !isOldVehiclePointInZone {
+					fmt.Println("Entro! : " + imei)
+					zoneNotification = &model.ZoneNotification{
+						Imei:      imei,
+						ZoneName:  zoneConfig.Nombre,
+						ZoneID:    int(zoneConfig.Id),
+						EventType: "entra",
+					}
+				}
+			}
+
+			if zoneConfig.AvisarSalida {
+				if !isCurrentVehiclePointInZone && isOldVehiclePointInZone {
+					fmt.Println("Salio! : " + imei)
+					zoneNotification = &model.ZoneNotification{
+						Imei:      imei,
+						ZoneName:  zoneConfig.Nombre,
+						ZoneID:    int(zoneConfig.Id),
+						EventType: "sale",
+					}
+				}
+			}
+
+			if zoneNotification != nil {
+				zoneNotificationBytes, _ := jsonEncoder.Marshal(zoneNotification)
+				fmt.Println("Por manadar message:" + imei)
+				err := services.GlobalSender.SendMessage(context.Background(), "notification.zone.back.preparing", zoneNotificationBytes)
+				if err != nil {
+					log.Println(err)
+				}
+				fmt.Println("Mensaje mandando:" + imei)
+			}
+
 		}
 
+		oldVehiclePoint = currentVehiclePoint
+
+		if data.CloseChannel {
+			return
+		}
 	}
-	d.last_logs[imei] = currentVehiclePoint
-	return nil
 }
 
 func getPolygonFromString(s string) ([]Point, error) {

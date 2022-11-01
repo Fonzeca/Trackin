@@ -17,4 +17,5 @@ type SimplyData struct {
 	EngineStatus bool      `json:"iopIgnition"`
 	Azimuth      int32     `json:"azimuth"`
 	PayLoad      string
+	CloseChannel bool
 }

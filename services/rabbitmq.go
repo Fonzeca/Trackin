@@ -1,6 +1,8 @@
 package services
 
 import (
+	"context"
+
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/spf13/viper"
 )
@@ -20,7 +22,22 @@ func SetupRabbitMq() (*amqp.Channel, func()) {
 		connectRabbitMQ.Close()
 		panic(err)
 	}
+	channelRabbitMQ.Qos(10, 10, false)
 
-	GlobalChannel = channelRabbitMQ
+	GlobalSender = &SenderRabbitMq{
+		channel: channelRabbitMQ,
+	}
+	GlobalRabbitChannel = channelRabbitMQ
 	return channelRabbitMQ, func() { connectRabbitMQ.Close(); channelRabbitMQ.Close() }
+}
+
+type SenderRabbitMq struct {
+	channel *amqp.Channel
+}
+
+func (s *SenderRabbitMq) SendMessage(context context.Context, destination string, message []byte) error {
+	return s.channel.PublishWithContext(context, "carmind", destination, false, false, amqp.Publishing{
+		Body:        message,
+		ContentType: "application/json",
+	})
 }

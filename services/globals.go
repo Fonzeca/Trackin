@@ -1,7 +1,9 @@
 package services
 
-import amqp "github.com/rabbitmq/amqp091-go"
+import "github.com/rabbitmq/amqp091-go"
 
 var (
-	GlobalChannel *amqp.Channel
+	GlobalSender ISender
+
+	GlobalRabbitChannel *amqp091.Channel
 )

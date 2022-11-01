@@ -1,34 +1,20 @@
 package manager
 
 import (
-	"time"
-
 	"github.com/Fonzeca/Trackin/db/model"
 	"github.com/Fonzeca/Trackin/db/query"
 	"github.com/Fonzeca/Trackin/entry/json"
 	"gorm.io/gorm"
 )
 
-var argTimeZone *time.Location
-
 type DataEntryManager struct {
 	geofenceService GeofenceDetector
-}
-
-func setTimeZone() {
-	arg, errArg := time.LoadLocation("America/Argentina/Buenos_Aires")
-	if errArg != nil {
-		panic(errArg)
-	}
-	argTimeZone = arg
 }
 
 func NewDataEntryManager() *DataEntryManager {
 	instance := &DataEntryManager{
 		geofenceService: *NewGeofenceDetector(),
 	}
-
-	setTimeZone()
 
 	return instance
 }
@@ -44,7 +30,7 @@ func (d *DataEntryManager) ProcessData(data json.SimplyData, db *gorm.DB) error 
 		ProtocolType: data.ProtocolType,
 		Latitud:      data.Latitude,
 		Longitud:     data.Longitude,
-		Date:         data.Date.In(argTimeZone),
+		Date:         data.Date,
 		Speed:        data.Speed,
 		AnalogInput1: data.AnalogInput1,
 		DeviceTemp:   data.DeviceTemp,
@@ -63,7 +49,7 @@ func (d *DataEntryManager) ProcessData(data json.SimplyData, db *gorm.DB) error 
 		return err
 	}
 
-	go d.geofenceService.ProcessData(data)
+	d.geofenceService.DispatchMessage(data)
 
 	return nil
 }

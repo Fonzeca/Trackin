@@ -8,14 +8,24 @@ import (
 	"gorm.io/gorm"
 )
 
-type ZonasManager struct {
+type IZonasManager interface {
+	GetZonesByEmpresaId(idParam string) ([]model.ZoneRequest, error)
+	CreateZone(zoneRequest model.ZoneRequest) error
+	EditZoneById(idParam string, zoneRequest model.ZoneRequest) error
+	DeleteZoneById(idParam string) error
+	GetZoneConfigByImei(imei string) ([]model.ZoneView, error)
 }
 
-func NewZonasManager() *ZonasManager {
-	return &ZonasManager{}
+var ZonasManager IZonasManager = newZonasManager()
+
+type zonasManager struct {
 }
 
-func (ma *ZonasManager) GetZonesByEmpresaId(idParam string) ([]model.ZoneRequest, error) {
+func newZonasManager() IZonasManager {
+	return &zonasManager{}
+}
+
+func (ma *zonasManager) GetZonesByEmpresaId(idParam string) ([]model.ZoneRequest, error) {
 	db, close, err := db.ObtenerConexionDb()
 	defer close()
 
@@ -84,7 +94,7 @@ func (ma *ZonasManager) GetZonesByEmpresaId(idParam string) ([]model.ZoneRequest
 	return zonesWithVehicles, tx.Error
 }
 
-func (ma *ZonasManager) CreateZone(zoneRequest model.ZoneRequest) error {
+func (ma *zonasManager) CreateZone(zoneRequest model.ZoneRequest) error {
 	db, close, err := db.ObtenerConexionDb()
 	defer close()
 
@@ -127,7 +137,7 @@ func (ma *ZonasManager) CreateZone(zoneRequest model.ZoneRequest) error {
 	return transactionErr
 }
 
-func (ma *ZonasManager) EditZoneById(idParam string, zoneRequest model.ZoneRequest) error {
+func (ma *zonasManager) EditZoneById(idParam string, zoneRequest model.ZoneRequest) error {
 	db, close, err := db.ObtenerConexionDb()
 	defer close()
 
@@ -174,7 +184,7 @@ func (ma *ZonasManager) EditZoneById(idParam string, zoneRequest model.ZoneReque
 	return tx.Error
 }
 
-func (ma *ZonasManager) DeleteZoneById(idParam string) error {
+func (ma *zonasManager) DeleteZoneById(idParam string) error {
 	db, close, err := db.ObtenerConexionDb()
 	defer close()
 
@@ -194,7 +204,7 @@ func (ma *ZonasManager) DeleteZoneById(idParam string) error {
 	return tx.Error
 }
 
-func (ma *ZonasManager) GetZoneConfigByImei(imei string) ([]model.ZoneView, error) {
+func (ma *zonasManager) GetZoneConfigByImei(imei string) ([]model.ZoneView, error) {
 	db, close, err := db.ObtenerConexionDb()
 	defer close()
 
@@ -207,5 +217,4 @@ func (ma *ZonasManager) GetZoneConfigByImei(imei string) ([]model.ZoneView, erro
 	}
 
 	return zoneConfig, tx.Error
-
 }
