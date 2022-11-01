@@ -30,7 +30,7 @@ func (d *DataEntryManager) ProcessData(data json.SimplyData, db *gorm.DB) error 
 		ProtocolType: data.ProtocolType,
 		Latitud:      data.Latitude,
 		Longitud:     data.Longitude,
-		Date:         data.Date,
+		Date:         data.Date.In(argTimeZone).Add(-time.Hour * 3),
 		Speed:        data.Speed,
 		AnalogInput1: data.AnalogInput1,
 		DeviceTemp:   data.DeviceTemp,
