@@ -22,7 +22,7 @@ func SetupRabbitMq() (*amqp.Channel, func()) {
 		connectRabbitMQ.Close()
 		panic(err)
 	}
-	channelRabbitMQ.Qos(10, 10, false)
+	channelRabbitMQ.Qos(10, 0, false)
 
 	GlobalSender = &SenderRabbitMq{
 		channel: channelRabbitMQ,
