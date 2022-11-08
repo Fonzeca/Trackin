@@ -3,6 +3,7 @@ package manager
 import (
 	"github.com/Fonzeca/Trackin/db"
 	"github.com/Fonzeca/Trackin/db/model"
+	"github.com/Fonzeca/Trackin/services"
 )
 
 type Manager struct {
@@ -27,8 +28,14 @@ func (ma *Manager) GetLastLogByImei(imei string) (model.LastLogView, error) {
 		return model.LastLogView{}, err
 	}
 
-	log := model.Log{}
-	tx := db.Select("imei", "latitud", "longitud", "speed", "date").Order("date desc").Where("imei = ?", imei).First(&log)
+	var log model.Log
+	lastpoint, ok := services.CachedPoints[imei]
+	if ok && lastpoint != nil {
+		log = *lastpoint
+	} else {
+		log = model.Log{}
+		db.Select("imei", "latitud", "longitud", "speed", "date").Order("date desc").Where("imei = ?", imei).First(&log)
+	}
 
 	lastLog := model.LastLogView{
 		Imei: log.Imei,
@@ -40,7 +47,7 @@ func (ma *Manager) GetLastLogByImei(imei string) (model.LastLogView, error) {
 		Date:  log.Date,
 	}
 
-	return lastLog, tx.Error
+	return lastLog, nil
 }
 
 func (ma *Manager) GetVehiclesStateByImeis(only string, imeis model.ImeisBody) ([]model.StateLogView, error) {
@@ -53,12 +60,20 @@ func (ma *Manager) GetVehiclesStateByImeis(only string, imeis model.ImeisBody) (
 
 	logs := []model.Log{}
 	for _, imei := range imeis.Imeis {
-		log := model.Log{}
-		if only != "" {
-			db.Select("imei", only, "date").Where("imei = ?", imei).Order("date DESC").Find(&log)
+		var log model.Log
+
+		lastpoint, ok := services.CachedPoints[imei]
+		if ok && lastpoint != nil {
+			log = *lastpoint
 		} else {
-			db.Select("imei", "latitud", "longitud", "engine_status", "azimuth", "date").Where("imei = ?", imei).Order("date DESC").Find(&log)
+			log = model.Log{}
+			if only != "" {
+				db.Select("imei", only, "date").Where("imei = ?", imei).Order("date DESC").Find(&log)
+			} else {
+				db.Select("imei", "latitud", "longitud", "engine_status", "azimuth", "date").Where("imei = ?", imei).Order("date DESC").Find(&log)
+			}
 		}
+
 		logs = append(logs, log)
 	}
 

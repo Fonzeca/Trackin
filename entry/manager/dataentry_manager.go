@@ -6,6 +6,7 @@ import (
 	"github.com/Fonzeca/Trackin/db/model"
 	"github.com/Fonzeca/Trackin/db/query"
 	"github.com/Fonzeca/Trackin/entry/json"
+	"github.com/Fonzeca/Trackin/services"
 	"gorm.io/gorm"
 )
 
@@ -51,7 +52,21 @@ func (d *DataEntryManager) ProcessData(data json.SimplyData, db *gorm.DB) error 
 		return err
 	}
 
+	d.UpdateCacheData(&log)
+
 	d.geofenceService.DispatchMessage(data)
 
 	return nil
+}
+
+func (d *DataEntryManager) UpdateCacheData(data *model.Log) {
+	lastpoint, ok := services.CachedPoints[data.Imei]
+	if !ok || lastpoint == nil {
+		services.CachedPoints[data.Imei] = data
+		return
+	}
+
+	if lastpoint.Date.Before(data.Date) {
+		services.CachedPoints[data.Imei] = data
+	}
 }
