@@ -3,7 +3,6 @@ package manager
 import (
 	"context"
 	"fmt"
-	"log"
 	"math"
 	"strconv"
 	"strings"
@@ -40,6 +39,7 @@ func NewGeofenceDetector() *GeofenceDetector {
 }
 
 func (d *GeofenceDetector) DispatchMessage(data json.SimplyData) {
+	fmt.Printf("Data recived, imei %s\n", data.Imei)
 	if data.EngineStatus {
 		if _, ok := d.imeisChannels[data.Imei]; !ok {
 			newChannel := make(chan json.SimplyData)
@@ -64,13 +64,9 @@ func (d *GeofenceDetector) Worker(channel chan json.SimplyData, imei string) {
 
 	//Obtenemos la config del imei con la zona
 	zonesConfig, _ := d.manager.GetZoneConfigByImei(imei)
-	if zonesConfig != nil && len(zonesConfig) <= 0 {
-		//El vehiculo no está asociado a ninguna zona, por lo tanto no hacemos nada
-		return
-	}
 	go func() {
-		time.Sleep(5 * time.Second)
 		for {
+			time.Sleep(5 * time.Second)
 			zonesConfig, _ = d.manager.GetZoneConfigByImei(imei)
 		}
 	}()
@@ -79,6 +75,10 @@ func (d *GeofenceDetector) Worker(channel chan json.SimplyData, imei string) {
 
 	for {
 		data := <-channel
+
+		if zonesConfig != nil && len(zonesConfig) <= 0 {
+			continue
+		}
 
 		var currentVehiclePoint *Point = &Point{lat: data.Latitude, lng: data.Longitude, date: data.Date}
 		if oldVehiclePoint == nil {
@@ -139,7 +139,7 @@ func (d *GeofenceDetector) Worker(channel chan json.SimplyData, imei string) {
 				fmt.Println("Por manadar message:" + imei)
 				err := services.GlobalSender.SendMessage(context.Background(), "notification.zone.back.preparing", zoneNotificationBytes)
 				if err != nil {
-					log.Println(err)
+					fmt.Println(err)
 				}
 				fmt.Println("Mensaje mandando:" + imei)
 			}

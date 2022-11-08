@@ -2,15 +2,15 @@ package services
 
 import (
 	"context"
+	"os"
 
 	amqp "github.com/rabbitmq/amqp091-go"
-	"github.com/spf13/viper"
 )
 
 func SetupRabbitMq() (*amqp.Channel, func()) {
 	// Create a new RabbitMQ connection.
 
-	connectRabbitMQ, err := amqp.Dial(viper.GetString("rabbitmq.url"))
+	connectRabbitMQ, err := amqp.Dial(os.Getenv("RABBIT_MQ_URL"))
 	if err != nil {
 		panic(err)
 	}
