@@ -11,12 +11,12 @@ import (
 )
 
 type DataEntryManager struct {
-	geofenceService GeofenceDetector
+	// geofenceService GeofenceDetector
 }
 
 func NewDataEntryManager() *DataEntryManager {
 	instance := &DataEntryManager{
-		geofenceService: *NewGeofenceDetector(),
+		// geofenceService: *NewGeofenceDetector(),
 	}
 
 	return instance
@@ -54,7 +54,7 @@ func (d *DataEntryManager) ProcessData(data json.SimplyData, db *gorm.DB) error 
 
 	d.UpdateCacheData(&log)
 
-	d.geofenceService.DispatchMessage(data)
+	// d.geofenceService.DispatchMessage(data)
 
 	return nil
 }

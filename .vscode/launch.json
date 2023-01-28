@@ -9,7 +9,13 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}"
+            "program": "${workspaceFolder}",
+            "env": {
+                "trackinDbHost":"vps-2367826-x.dattaweb.com:3306",
+                "trackinDbUser":"root",
+                "trackinDbPass":"carmind-db",
+                "RABBIT_MQ_URL":"amqp://guest:guest@vps-2367826-x.dattaweb.com:4859"
+            }
         },
         {
             "name": "Test Current File",
