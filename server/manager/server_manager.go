@@ -29,14 +29,14 @@ func (ma *Manager) GetLastLogByImei(imei string) (model.LastLogView, error) {
 	}
 
 	var log model.Log
-	lastpoint, ok := services.CachedPoints[imei]
+	lastpoint, ok := services.GetCachedPoints(imei)
 	if ok && lastpoint != nil {
 		log = *lastpoint
 	} else {
 		log = model.Log{}
 		db.Select("imei", "latitud", "longitud", "speed", "date").Order("date desc").Where("imei = ?", imei).First(&log)
 
-		services.CachedPoints[imei] = &log
+		services.SetCachedPoints(imei, &log)
 	}
 
 	lastLog := model.LastLogView{
@@ -64,7 +64,7 @@ func (ma *Manager) GetVehiclesStateByImeis(only string, imeis model.ImeisBody) (
 	for _, imei := range imeis.Imeis {
 		var log model.Log
 
-		lastpoint, ok := services.CachedPoints[imei]
+		lastpoint, ok := services.GetCachedPoints(imei)
 		if ok && lastpoint != nil {
 			log = *lastpoint
 		} else {
@@ -75,7 +75,7 @@ func (ma *Manager) GetVehiclesStateByImeis(only string, imeis model.ImeisBody) (
 				db.Select("imei", "latitud", "longitud", "engine_status", "azimuth", "date").Where("imei = ?", imei).Order("date DESC").First(&log)
 			}
 
-			services.CachedPoints[imei] = &log
+			go services.SetCachedPoints(imei, &log)
 		}
 
 		logs = append(logs, log)
