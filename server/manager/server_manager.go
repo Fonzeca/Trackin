@@ -35,6 +35,8 @@ func (ma *Manager) GetLastLogByImei(imei string) (model.LastLogView, error) {
 	} else {
 		log = model.Log{}
 		db.Select("imei", "latitud", "longitud", "speed", "date").Order("date desc").Where("imei = ?", imei).First(&log)
+
+		services.CachedPoints[imei] = &log
 	}
 
 	lastLog := model.LastLogView{
@@ -68,10 +70,12 @@ func (ma *Manager) GetVehiclesStateByImeis(only string, imeis model.ImeisBody) (
 		} else {
 			log = model.Log{}
 			if only != "" {
-				db.Select("imei", only, "date").Where("imei = ?", imei).Order("date DESC").Find(&log)
+				db.Select("imei", only, "date").Where("imei = ?", imei).Order("date DESC").First(&log)
 			} else {
-				db.Select("imei", "latitud", "longitud", "engine_status", "azimuth", "date").Where("imei = ?", imei).Order("date DESC").Find(&log)
+				db.Select("imei", "latitud", "longitud", "engine_status", "azimuth", "date").Where("imei = ?", imei).Order("date DESC").First(&log)
 			}
+
+			services.CachedPoints[imei] = &log
 		}
 
 		logs = append(logs, log)
