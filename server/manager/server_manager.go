@@ -91,7 +91,7 @@ func (ma *Manager) GetVehiclesStateByImeis(only string, imeis model.ImeisBody) (
 			},
 			EngineStatus: log.EngineStatus,
 			Azimuth:      log.Azimuth,
-			Date: log.Date,
+			Date:         log.Date,
 		})
 	}
 
@@ -158,8 +158,9 @@ func (ma *Manager) GetRouteByImei(requestRoute model.RouteRequest) ([]interface{
 				Latitutd: log.Latitud,
 				Longitud: log.Longitud,
 			},
-			Speed:   log.Speed,
-			Azimuth: log.Azimuth,
+			Speed:     log.Speed,
+			Azimuth:   log.Azimuth,
+			Timestamp: log.Date.UnixMilli(),
 		})
 
 		if index >= len(logs)-1 {

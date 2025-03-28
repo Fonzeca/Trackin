@@ -15,11 +15,11 @@ type LastLogView struct {
 }
 
 type StateLogView struct {
-	Imei string				`json:"imei"`
+	Imei string `json:"imei"`
 	Location
-	EngineStatus bool		`json:"engine_status"`
-	Azimuth      int32 		`json:"azimuth,omitempty"`
-	Date  		 time.Time	`json:"date"`
+	EngineStatus bool      `json:"engine_status"`
+	Azimuth      int32     `json:"azimuth,omitempty"`
+	Date         time.Time `json:"date"`
 }
 
 type RouteView struct {
@@ -33,8 +33,9 @@ type RouteView struct {
 
 type RouteDataView struct {
 	Location
-	Speed   float32 `json:"speed"`
-	Azimuth int32   `json:"azimuth,omitempty"`
+	Speed     float32 `json:"speed"`
+	Azimuth   int32   `json:"azimuth,omitempty"`
+	Timestamp int64   `json:"timestamp,omitempty"`
 }
 
 type StopView struct {
