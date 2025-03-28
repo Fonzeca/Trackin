@@ -91,6 +91,7 @@ func (ma *Manager) GetVehiclesStateByImeis(only string, imeis model.ImeisBody) (
 			},
 			EngineStatus: log.EngineStatus,
 			Azimuth:      log.Azimuth,
+			Date: log.Date,
 		})
 	}
 
