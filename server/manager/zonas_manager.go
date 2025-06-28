@@ -25,6 +25,8 @@ func newZonasManager() IZonasManager {
 	return &zonasManager{}
 }
 
+// GetZonesByEmpresaId obtiene todas las zonas de una empresa, incluyendo las asociadas y no asociadas a vehículos.
+// Retorna una lista de ZoneRequest, agrupando los imeis de los vehículos asociados a cada zona.
 func (ma *zonasManager) GetZonesByEmpresaId(idParam string) ([]model.ZoneRequest, error) {
 	db, close, err := db.ObtenerConexionDb()
 	defer close()
@@ -33,65 +35,57 @@ func (ma *zonasManager) GetZonesByEmpresaId(idParam string) ([]model.ZoneRequest
 		return nil, err
 	}
 
-	//Scamos el id de la empresa
 	id, idParseErr := strconv.Atoi(idParam)
-
 	if idParseErr != nil {
-		return []model.ZoneRequest{}, idParseErr
+		return nil, idParseErr
 	}
 
+	// Consulta única con LEFT JOIN para traer zonas con y sin vehículos asociados
 	zones := []model.ZoneView{}
-
-	tx := db.Model(&model.Zona{}).Select("zona.id, zona.empresa_id, zona.color_linea, zona.color_relleno, zona.puntos, zona.nombre, zona_vehiculos.imei, zona_vehiculos.avisar_entrada, zona_vehiculos.avisar_salida").Joins("join zona_vehiculos on zona.id = zona_vehiculos.zona_id").Where("empresa_id = ?", id).Order("zona.id desc").Scan(&zones)
+	tx := db.Model(&model.Zona{}).
+		Select("zona.id, zona.empresa_id, zona.color_linea, zona.color_relleno, zona.puntos, zona.nombre, zona.velocidad_maxima, zona_vehiculos.imei, zona_vehiculos.avisar_entrada, zona_vehiculos.avisar_salida").
+		Joins("LEFT JOIN zona_vehiculos ON zona.id = zona_vehiculos.zona_id").
+		Where("zona.empresa_id = ?", id).
+		Order("zona.id desc").
+		Scan(&zones)
 
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
 
-	zonesWithVehicles := []model.ZoneRequest{}
-
-	var previousZoneId int32 = -1
-	for i, zone := range zones {
-		if zone.Id != previousZoneId || i == 0 {
-			zonesWithVehicles = append(zonesWithVehicles, model.ZoneRequest{
-				Id:            zone.Id,
-				EmpresaId:     zone.EmpresaId,
-				ColorLinea:    zone.ColorLinea,
-				ColorRelleno:  zone.ColorRelleno,
-				Puntos:        zone.Puntos,
-				Nombre:        zone.Nombre,
-				Imeis:         []string{zone.Imei},
-				AvisarEntrada: zone.AvisarEntrada,
-				AvisarSalida:  zone.AvisarSalida,
-			})
-		} else {
-			zonesWithVehicles[len(zonesWithVehicles)-1].Imeis = append(zonesWithVehicles[len(zonesWithVehicles)-1].Imeis, zone.Imei)
-		}
-		previousZoneId = zone.Id
-	}
-
-	zones = []model.ZoneView{}
-
-	tx = db.Model(&model.Zona{}).Joins("left outer join zona_vehiculos on zona.id = zona_vehiculos.zona_id").Where("empresa_id = ? AND zona_vehiculos.zona_id is null", id).Order("id desc").Scan(&zones)
-
-	zonesWithoutVehciles := []model.ZoneRequest{}
-
+	// Agrupar los resultados por zona
+	zoneMap := make(map[int32]*model.ZoneRequest)
 	for _, zone := range zones {
-		zonesWithoutVehciles = append(zonesWithoutVehciles, model.ZoneRequest{
-			Id:            zone.Id,
-			EmpresaId:     zone.EmpresaId,
-			ColorLinea:    zone.ColorLinea,
-			ColorRelleno:  zone.ColorRelleno,
-			Puntos:        zone.Puntos,
-			Nombre:        zone.Nombre,
-			Imeis:         []string{zone.Imei},
-			AvisarEntrada: zone.AvisarEntrada,
-			AvisarSalida:  zone.AvisarSalida,
-		})
+		zr, exists := zoneMap[zone.Id]
+		if !exists {
+			zr = &model.ZoneRequest{
+				Id:              zone.Id,
+				EmpresaId:       zone.EmpresaId,
+				ColorLinea:      zone.ColorLinea,
+				ColorRelleno:    zone.ColorRelleno,
+				Puntos:          zone.Puntos,
+				Nombre:          zone.Nombre,
+				Imeis:           []string{},
+				AvisarEntrada:   zone.AvisarEntrada,
+				AvisarSalida:    zone.AvisarSalida,
+				VelocidadMaxima: zone.VelocidadMaxima,
+			}
+			zoneMap[zone.Id] = zr
+		}
+		if zone.Imei != "" {
+			zr.Imeis = append(zr.Imeis, zone.Imei)
+			zr.AvisarEntrada = zone.AvisarEntrada
+			zr.AvisarSalida = zone.AvisarSalida
+		}
 	}
-	zonesWithVehicles = append(zonesWithVehicles, zonesWithoutVehciles...)
 
-	return zonesWithVehicles, tx.Error
+	// Convertir el mapa a slice
+	result := make([]model.ZoneRequest, 0, len(zoneMap))
+	for _, v := range zoneMap {
+		result = append(result, *v)
+	}
+
+	return result, nil
 }
 
 func (ma *zonasManager) CreateZone(zoneRequest model.ZoneRequest) error {
@@ -105,11 +99,12 @@ func (ma *zonasManager) CreateZone(zoneRequest model.ZoneRequest) error {
 	transactionErr := db.Transaction(func(tx *gorm.DB) error {
 
 		zone := model.Zona{
-			EmpresaID:    int32(zoneRequest.EmpresaId),
-			ColorLinea:   zoneRequest.ColorLinea,
-			ColorRelleno: zoneRequest.ColorRelleno,
-			Puntos:       zoneRequest.Puntos,
-			Nombre:       zoneRequest.Nombre,
+			EmpresaID:       int32(zoneRequest.EmpresaId),
+			ColorLinea:      zoneRequest.ColorLinea,
+			ColorRelleno:    zoneRequest.ColorRelleno,
+			Puntos:          zoneRequest.Puntos,
+			Nombre:          zoneRequest.Nombre,
+			VelocidadMaxima: zoneRequest.VelocidadMaxima,
 		}
 
 		if err := tx.Create(&zone).Error; err != nil {
@@ -152,12 +147,13 @@ func (ma *zonasManager) EditZoneById(idParam string, zoneRequest model.ZoneReque
 	}
 
 	zone := model.Zona{
-		ID:           int32(id),
-		EmpresaID:    int32(zoneRequest.EmpresaId),
-		ColorLinea:   zoneRequest.ColorLinea,
-		ColorRelleno: zoneRequest.ColorRelleno,
-		Puntos:       zoneRequest.Puntos,
-		Nombre:       zoneRequest.Nombre,
+		ID:              int32(id),
+		EmpresaID:       int32(zoneRequest.EmpresaId),
+		ColorLinea:      zoneRequest.ColorLinea,
+		ColorRelleno:    zoneRequest.ColorRelleno,
+		Puntos:          zoneRequest.Puntos,
+		Nombre:          zoneRequest.Nombre,
+		VelocidadMaxima: zoneRequest.VelocidadMaxima,
 	}
 	tx := db.Save(&zone)
 
@@ -210,7 +206,11 @@ func (ma *zonasManager) GetZoneConfigByImei(imei string) ([]model.ZoneView, erro
 
 	zoneConfig := []model.ZoneView{}
 
-	tx := db.Model(&model.ZonaVehiculo{}).Select("zona.puntos, zona.nombre, zona.id, zona_vehiculos.avisar_entrada, zona_vehiculos.avisar_salida").Joins("join zona on zona.id = zona_vehiculos.zona_id").Where("imei = ?", imei).Scan(&zoneConfig)
+	tx := db.Model(&model.ZonaVehiculo{}).
+		Select("zona.puntos, zona.nombre, zona.id, zona_vehiculos.avisar_entrada, zona_vehiculos.avisar_salida, zona.velocidad_maxima").
+		Joins("join zona on zona.id = zona_vehiculos.zona_id").
+		Where("imei = ?", imei).
+		Scan(&zoneConfig)
 
 	if err != nil {
 		return []model.ZoneView{}, err

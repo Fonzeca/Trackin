@@ -60,27 +60,29 @@ type ImeisBody struct {
 }
 
 type ZoneView struct {
-	Id            int32  `json:"id,omitempty"`
-	EmpresaId     int32  `json:"empresa_id,omitempty"`
-	ColorLinea    string `json:"color_linea,omitempty"`
-	ColorRelleno  string `json:"color_relleno,omitempty"`
-	Puntos        string `json:"puntos,omitempty"`
-	Nombre        string `json:"nombre,omitempty"`
-	Imei          string `json:"imei"`
-	AvisarEntrada bool   `json:"avisar_entrada,omitempty"`
-	AvisarSalida  bool   `json:"avisar_salida,omitempty"`
+	Id              int32   `json:"id,omitempty"`
+	EmpresaId       int32   `json:"empresa_id,omitempty"`
+	ColorLinea      string  `json:"color_linea,omitempty"`
+	ColorRelleno    string  `json:"color_relleno,omitempty"`
+	Puntos          string  `json:"puntos,omitempty"`
+	Nombre          string  `json:"nombre,omitempty"`
+	Imei            string  `json:"imei"`
+	AvisarEntrada   bool    `json:"avisar_entrada,omitempty"`
+	AvisarSalida    bool    `json:"avisar_salida,omitempty"`
+	VelocidadMaxima float64 `json:"velocidad_maxima,omitempty"`
 }
 
 type ZoneRequest struct {
-	Id            int32    `json:"id,omitempty"`
-	EmpresaId     int32    `json:"empresa_id,omitempty"`
-	ColorLinea    string   `json:"color_linea,omitempty"`
-	ColorRelleno  string   `json:"color_relleno,omitempty"`
-	Puntos        string   `json:"puntos,omitempty"`
-	Nombre        string   `json:"nombre,omitempty"`
-	Imeis         []string `json:"imeis"`
-	AvisarEntrada bool     `json:"avisar_entrada,omitempty"`
-	AvisarSalida  bool     `json:"avisar_salida,omitempty"`
+	Id              int32    `json:"id,omitempty"`
+	EmpresaId       int32    `json:"empresa_id,omitempty"`
+	ColorLinea      string   `json:"color_linea,omitempty"`
+	ColorRelleno    string   `json:"color_relleno,omitempty"`
+	Puntos          string   `json:"puntos,omitempty"`
+	Nombre          string   `json:"nombre,omitempty"`
+	Imeis           []string `json:"imeis"`
+	AvisarEntrada   bool     `json:"avisar_entrada,omitempty"`
+	AvisarSalida    bool     `json:"avisar_salida,omitempty"`
+	VelocidadMaxima float64  `json:"velocidad_maxima,omitempty"`
 }
 
 type ZoneVehiclesView struct {

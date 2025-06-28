@@ -33,6 +33,7 @@ func newZona(db *gorm.DB, opts ...gen.DOOption) zona {
 	_zona.ColorRelleno = field.NewString(tableName, "color_relleno")
 	_zona.Puntos = field.NewString(tableName, "puntos")
 	_zona.Nombre = field.NewString(tableName, "nombre")
+	_zona.VelocidadMaxima = field.NewFloat64(tableName, "velocidad_maxima")
 
 	_zona.fillFieldMap()
 
@@ -42,13 +43,14 @@ func newZona(db *gorm.DB, opts ...gen.DOOption) zona {
 type zona struct {
 	zonaDo
 
-	ALL          field.Asterisk
-	ID           field.Int32
-	EmpresaID    field.Int32
-	ColorLinea   field.String
-	ColorRelleno field.String
-	Puntos       field.String
-	Nombre       field.String
+	ALL             field.Asterisk
+	ID              field.Int32
+	EmpresaID       field.Int32
+	ColorLinea      field.String
+	ColorRelleno    field.String
+	Puntos          field.String
+	Nombre          field.String
+	VelocidadMaxima field.Float64
 
 	fieldMap map[string]field.Expr
 }
@@ -71,6 +73,7 @@ func (z *zona) updateTableName(table string) *zona {
 	z.ColorRelleno = field.NewString(table, "color_relleno")
 	z.Puntos = field.NewString(table, "puntos")
 	z.Nombre = field.NewString(table, "nombre")
+	z.VelocidadMaxima = field.NewFloat64(table, "velocidad_maxima")
 
 	z.fillFieldMap()
 
@@ -87,13 +90,14 @@ func (z *zona) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (z *zona) fillFieldMap() {
-	z.fieldMap = make(map[string]field.Expr, 6)
+	z.fieldMap = make(map[string]field.Expr, 7)
 	z.fieldMap["id"] = z.ID
 	z.fieldMap["empresa_id"] = z.EmpresaID
 	z.fieldMap["color_linea"] = z.ColorLinea
 	z.fieldMap["color_relleno"] = z.ColorRelleno
 	z.fieldMap["puntos"] = z.Puntos
 	z.fieldMap["nombre"] = z.Nombre
+	z.fieldMap["velocidad_maxima"] = z.VelocidadMaxima
 }
 
 func (z zona) clone(db *gorm.DB) zona {

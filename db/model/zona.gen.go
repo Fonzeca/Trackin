@@ -8,12 +8,13 @@ const TableNameZona = "zona"
 
 // Zona mapped from table <zona>
 type Zona struct {
-	ID           int32  `gorm:"column:id;primaryKey;autoIncrement:true" json:"id"`
-	EmpresaID    int32  `gorm:"column:empresa_id;not null" json:"empresa_id"`
-	ColorLinea   string `gorm:"column:color_linea;not null" json:"color_linea"`
-	ColorRelleno string `gorm:"column:color_relleno;not null" json:"color_relleno"`
-	Puntos       string `gorm:"column:puntos;not null" json:"puntos"`
-	Nombre       string `gorm:"column:nombre;not null" json:"nombre"`
+	ID              int32   `gorm:"column:id;primaryKey;autoIncrement:true" json:"id"`
+	EmpresaID       int32   `gorm:"column:empresa_id;not null" json:"empresa_id"`
+	ColorLinea      string  `gorm:"column:color_linea;not null" json:"color_linea"`
+	ColorRelleno    string  `gorm:"column:color_relleno;not null" json:"color_relleno"`
+	Puntos          string  `gorm:"column:puntos;not null" json:"puntos"`
+	Nombre          string  `gorm:"column:nombre;not null" json:"nombre"`
+	VelocidadMaxima float64 `gorm:"column:velocidad_maxima" json:"velocidad_maxima"`
 }
 
 // TableName Zona's table name
