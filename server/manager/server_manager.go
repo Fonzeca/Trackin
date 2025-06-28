@@ -22,11 +22,10 @@ func (ma *Manager) getId() int32 {
 
 func (ma *Manager) GetLastLogByImei(imei string) (model.LastLogView, error) {
 	db, close, err := db.ObtenerConexionDb()
-	defer close()
-
 	if err != nil {
 		return model.LastLogView{}, err
 	}
+	defer close()
 
 	var log model.Log
 	lastpoint, ok := services.GetCachedPoints(imei)
@@ -54,11 +53,10 @@ func (ma *Manager) GetLastLogByImei(imei string) (model.LastLogView, error) {
 
 func (ma *Manager) GetVehiclesStateByImeis(only string, imeis model.ImeisBody) ([]model.StateLogView, error) {
 	db, close, err := db.ObtenerConexionDb()
-	defer close()
-
 	if err != nil {
 		return nil, err
 	}
+	defer close()
 
 	logs := []model.Log{}
 	for _, imei := range imeis.Imeis {
@@ -100,11 +98,10 @@ func (ma *Manager) GetVehiclesStateByImeis(only string, imeis model.ImeisBody) (
 
 func (ma *Manager) GetRouteByImei(requestRoute model.RouteRequest) ([]interface{}, error) {
 	db, close, err := db.ObtenerConexionDb()
-	defer close()
-
 	if err != nil {
 		return nil, err
 	}
+	defer close()
 
 	logs := []model.Log{}
 	tx := db.Select("date", "latitud", "longitud", "speed", "mileage", "engine_status", "azimuth").Where("imei = ? AND date BETWEEN ? AND ?", requestRoute.Imei, requestRoute.From, requestRoute.To).Order("date ASC").Find(&logs)

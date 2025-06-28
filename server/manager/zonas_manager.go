@@ -29,11 +29,11 @@ func newZonasManager() IZonasManager {
 // Retorna una lista de ZoneRequest, agrupando los imeis de los vehículos asociados a cada zona.
 func (ma *zonasManager) GetZonesByEmpresaId(idParam string) ([]model.ZoneRequest, error) {
 	db, close, err := db.ObtenerConexionDb()
-	defer close()
 
 	if err != nil {
 		return nil, err
 	}
+	defer close()
 
 	id, idParseErr := strconv.Atoi(idParam)
 	if idParseErr != nil {
@@ -90,11 +90,10 @@ func (ma *zonasManager) GetZonesByEmpresaId(idParam string) ([]model.ZoneRequest
 
 func (ma *zonasManager) CreateZone(zoneRequest model.ZoneRequest) error {
 	db, close, err := db.ObtenerConexionDb()
-	defer close()
-
 	if err != nil {
 		return err
 	}
+	defer close()
 
 	transactionErr := db.Transaction(func(tx *gorm.DB) error {
 
@@ -134,11 +133,10 @@ func (ma *zonasManager) CreateZone(zoneRequest model.ZoneRequest) error {
 
 func (ma *zonasManager) EditZoneById(idParam string, zoneRequest model.ZoneRequest) error {
 	db, close, err := db.ObtenerConexionDb()
-	defer close()
-
 	if err != nil {
 		return err
 	}
+	defer close()
 
 	id, idParseErr := strconv.Atoi(idParam)
 
@@ -182,6 +180,9 @@ func (ma *zonasManager) EditZoneById(idParam string, zoneRequest model.ZoneReque
 
 func (ma *zonasManager) DeleteZoneById(idParam string) error {
 	db, close, err := db.ObtenerConexionDb()
+	if err != nil {
+		return err
+	}
 	defer close()
 
 	if err != nil {
@@ -202,6 +203,9 @@ func (ma *zonasManager) DeleteZoneById(idParam string) error {
 
 func (ma *zonasManager) GetZoneConfigByImei(imei string) ([]model.ZoneView, error) {
 	db, close, err := db.ObtenerConexionDb()
+	if err != nil {
+		return []model.ZoneView{}, err
+	}
 	defer close()
 
 	zoneConfig := []model.ZoneView{}
