@@ -19,14 +19,14 @@ import (
 	"github.com/Fonzeca/Trackin/db/model"
 )
 
-func newZonaVehiculo(db *gorm.DB) zonaVehiculo {
+func newZonaVehiculo(db *gorm.DB, opts ...gen.DOOption) zonaVehiculo {
 	_zonaVehiculo := zonaVehiculo{}
 
-	_zonaVehiculo.zonaVehiculoDo.UseDB(db)
+	_zonaVehiculo.zonaVehiculoDo.UseDB(db, opts...)
 	_zonaVehiculo.zonaVehiculoDo.UseModel(&model.ZonaVehiculo{})
 
 	tableName := _zonaVehiculo.zonaVehiculoDo.TableName()
-	_zonaVehiculo.ALL = field.NewField(tableName, "*")
+	_zonaVehiculo.ALL = field.NewAsterisk(tableName)
 	_zonaVehiculo.ID = field.NewInt32(tableName, "id")
 	_zonaVehiculo.ZonaID = field.NewInt32(tableName, "zona_id")
 	_zonaVehiculo.Imei = field.NewString(tableName, "imei")
@@ -41,7 +41,7 @@ func newZonaVehiculo(db *gorm.DB) zonaVehiculo {
 type zonaVehiculo struct {
 	zonaVehiculoDo
 
-	ALL           field.Field
+	ALL           field.Asterisk
 	ID            field.Int32
 	ZonaID        field.Int32
 	Imei          field.String
@@ -62,7 +62,7 @@ func (z zonaVehiculo) As(alias string) *zonaVehiculo {
 }
 
 func (z *zonaVehiculo) updateTableName(table string) *zonaVehiculo {
-	z.ALL = field.NewField(table, "*")
+	z.ALL = field.NewAsterisk(table)
 	z.ID = field.NewInt32(table, "id")
 	z.ZonaID = field.NewInt32(table, "zona_id")
 	z.Imei = field.NewString(table, "imei")
@@ -93,6 +93,11 @@ func (z *zonaVehiculo) fillFieldMap() {
 }
 
 func (z zonaVehiculo) clone(db *gorm.DB) zonaVehiculo {
+	z.zonaVehiculoDo.ReplaceConnPool(db.Statement.ConnPool)
+	return z
+}
+
+func (z zonaVehiculo) replaceDB(db *gorm.DB) zonaVehiculo {
 	z.zonaVehiculoDo.ReplaceDB(db)
 	return z
 }
@@ -107,12 +112,16 @@ func (z zonaVehiculoDo) WithContext(ctx context.Context) *zonaVehiculoDo {
 	return z.withDO(z.DO.WithContext(ctx))
 }
 
-func (z zonaVehiculoDo) ReadDB(ctx context.Context) *zonaVehiculoDo {
-	return z.WithContext(ctx).Clauses(dbresolver.Read)
+func (z zonaVehiculoDo) ReadDB() *zonaVehiculoDo {
+	return z.Clauses(dbresolver.Read)
 }
 
-func (z zonaVehiculoDo) WriteDB(ctx context.Context) *zonaVehiculoDo {
-	return z.WithContext(ctx).Clauses(dbresolver.Write)
+func (z zonaVehiculoDo) WriteDB() *zonaVehiculoDo {
+	return z.Clauses(dbresolver.Write)
+}
+
+func (z zonaVehiculoDo) Session(config *gorm.Session) *zonaVehiculoDo {
+	return z.withDO(z.DO.Session(config))
 }
 
 func (z zonaVehiculoDo) Clauses(conds ...clause.Expression) *zonaVehiculoDo {
@@ -314,6 +323,14 @@ func (z zonaVehiculoDo) ScanByPage(result interface{}, offset int, limit int) (c
 
 	err = z.Offset(offset).Limit(limit).Scan(result)
 	return
+}
+
+func (z zonaVehiculoDo) Scan(result interface{}) (err error) {
+	return z.DO.Scan(result)
+}
+
+func (z zonaVehiculoDo) Delete(models ...*model.ZonaVehiculo) (result gen.ResultInfo, err error) {
+	return z.DO.Delete(models)
 }
 
 func (z *zonaVehiculoDo) withDO(do gen.Dao) *zonaVehiculoDo {

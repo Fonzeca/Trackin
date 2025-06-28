@@ -9,14 +9,18 @@ import (
 	"database/sql"
 
 	"gorm.io/gorm"
+
+	"gorm.io/gen"
+
+	"gorm.io/plugin/dbresolver"
 )
 
-func Use(db *gorm.DB) *Query {
+func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 	return &Query{
 		db:           db,
-		Log:          newLog(db),
-		Zona:         newZona(db),
-		ZonaVehiculo: newZonaVehiculo(db),
+		Log:          newLog(db, opts...),
+		Zona:         newZona(db, opts...),
+		ZonaVehiculo: newZonaVehiculo(db, opts...),
 	}
 }
 
@@ -39,17 +43,34 @@ func (q *Query) clone(db *gorm.DB) *Query {
 	}
 }
 
+func (q *Query) ReadDB() *Query {
+	return q.clone(q.db.Clauses(dbresolver.Read))
+}
+
+func (q *Query) WriteDB() *Query {
+	return q.clone(q.db.Clauses(dbresolver.Write))
+}
+
+func (q *Query) ReplaceDB(db *gorm.DB) *Query {
+	return &Query{
+		db:           db,
+		Log:          q.Log.replaceDB(db),
+		Zona:         q.Zona.replaceDB(db),
+		ZonaVehiculo: q.ZonaVehiculo.replaceDB(db),
+	}
+}
+
 type queryCtx struct {
-	Log          logDo
-	Zona         zonaDo
-	ZonaVehiculo zonaVehiculoDo
+	Log          *logDo
+	Zona         *zonaDo
+	ZonaVehiculo *zonaVehiculoDo
 }
 
 func (q *Query) WithContext(ctx context.Context) *queryCtx {
 	return &queryCtx{
-		Log:          *q.Log.WithContext(ctx),
-		Zona:         *q.Zona.WithContext(ctx),
-		ZonaVehiculo: *q.ZonaVehiculo.WithContext(ctx),
+		Log:          q.Log.WithContext(ctx),
+		Zona:         q.Zona.WithContext(ctx),
+		ZonaVehiculo: q.ZonaVehiculo.WithContext(ctx),
 	}
 }
 

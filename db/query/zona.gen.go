@@ -19,14 +19,14 @@ import (
 	"github.com/Fonzeca/Trackin/db/model"
 )
 
-func newZona(db *gorm.DB) zona {
+func newZona(db *gorm.DB, opts ...gen.DOOption) zona {
 	_zona := zona{}
 
-	_zona.zonaDo.UseDB(db)
+	_zona.zonaDo.UseDB(db, opts...)
 	_zona.zonaDo.UseModel(&model.Zona{})
 
 	tableName := _zona.zonaDo.TableName()
-	_zona.ALL = field.NewField(tableName, "*")
+	_zona.ALL = field.NewAsterisk(tableName)
 	_zona.ID = field.NewInt32(tableName, "id")
 	_zona.EmpresaID = field.NewInt32(tableName, "empresa_id")
 	_zona.ColorLinea = field.NewString(tableName, "color_linea")
@@ -42,7 +42,7 @@ func newZona(db *gorm.DB) zona {
 type zona struct {
 	zonaDo
 
-	ALL          field.Field
+	ALL          field.Asterisk
 	ID           field.Int32
 	EmpresaID    field.Int32
 	ColorLinea   field.String
@@ -64,7 +64,7 @@ func (z zona) As(alias string) *zona {
 }
 
 func (z *zona) updateTableName(table string) *zona {
-	z.ALL = field.NewField(table, "*")
+	z.ALL = field.NewAsterisk(table)
 	z.ID = field.NewInt32(table, "id")
 	z.EmpresaID = field.NewInt32(table, "empresa_id")
 	z.ColorLinea = field.NewString(table, "color_linea")
@@ -97,6 +97,11 @@ func (z *zona) fillFieldMap() {
 }
 
 func (z zona) clone(db *gorm.DB) zona {
+	z.zonaDo.ReplaceConnPool(db.Statement.ConnPool)
+	return z
+}
+
+func (z zona) replaceDB(db *gorm.DB) zona {
 	z.zonaDo.ReplaceDB(db)
 	return z
 }
@@ -111,12 +116,16 @@ func (z zonaDo) WithContext(ctx context.Context) *zonaDo {
 	return z.withDO(z.DO.WithContext(ctx))
 }
 
-func (z zonaDo) ReadDB(ctx context.Context) *zonaDo {
-	return z.WithContext(ctx).Clauses(dbresolver.Read)
+func (z zonaDo) ReadDB() *zonaDo {
+	return z.Clauses(dbresolver.Read)
 }
 
-func (z zonaDo) WriteDB(ctx context.Context) *zonaDo {
-	return z.WithContext(ctx).Clauses(dbresolver.Write)
+func (z zonaDo) WriteDB() *zonaDo {
+	return z.Clauses(dbresolver.Write)
+}
+
+func (z zonaDo) Session(config *gorm.Session) *zonaDo {
+	return z.withDO(z.DO.Session(config))
 }
 
 func (z zonaDo) Clauses(conds ...clause.Expression) *zonaDo {
@@ -318,6 +327,14 @@ func (z zonaDo) ScanByPage(result interface{}, offset int, limit int) (count int
 
 	err = z.Offset(offset).Limit(limit).Scan(result)
 	return
+}
+
+func (z zonaDo) Scan(result interface{}) (err error) {
+	return z.DO.Scan(result)
+}
+
+func (z zonaDo) Delete(models ...*model.Zona) (result gen.ResultInfo, err error) {
+	return z.DO.Delete(models)
 }
 
 func (z *zonaDo) withDO(do gen.Dao) *zonaDo {

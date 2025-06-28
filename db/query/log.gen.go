@@ -19,14 +19,14 @@ import (
 	"github.com/Fonzeca/Trackin/db/model"
 )
 
-func newLog(db *gorm.DB) log {
+func newLog(db *gorm.DB, opts ...gen.DOOption) log {
 	_log := log{}
 
-	_log.logDo.UseDB(db)
+	_log.logDo.UseDB(db, opts...)
 	_log.logDo.UseModel(&model.Log{})
 
 	tableName := _log.logDo.TableName()
-	_log.ALL = field.NewField(tableName, "*")
+	_log.ALL = field.NewAsterisk(tableName)
 	_log.ID = field.NewInt32(tableName, "id")
 	_log.Imei = field.NewString(tableName, "imei")
 	_log.ProtocolType = field.NewInt32(tableName, "protocol_type")
@@ -51,7 +51,7 @@ func newLog(db *gorm.DB) log {
 type log struct {
 	logDo
 
-	ALL          field.Field
+	ALL          field.Asterisk
 	ID           field.Int32
 	Imei         field.String
 	ProtocolType field.Int32
@@ -82,7 +82,7 @@ func (l log) As(alias string) *log {
 }
 
 func (l *log) updateTableName(table string) *log {
-	l.ALL = field.NewField(table, "*")
+	l.ALL = field.NewAsterisk(table)
 	l.ID = field.NewInt32(table, "id")
 	l.Imei = field.NewString(table, "imei")
 	l.ProtocolType = field.NewInt32(table, "protocol_type")
@@ -133,6 +133,11 @@ func (l *log) fillFieldMap() {
 }
 
 func (l log) clone(db *gorm.DB) log {
+	l.logDo.ReplaceConnPool(db.Statement.ConnPool)
+	return l
+}
+
+func (l log) replaceDB(db *gorm.DB) log {
 	l.logDo.ReplaceDB(db)
 	return l
 }
@@ -147,12 +152,16 @@ func (l logDo) WithContext(ctx context.Context) *logDo {
 	return l.withDO(l.DO.WithContext(ctx))
 }
 
-func (l logDo) ReadDB(ctx context.Context) *logDo {
-	return l.WithContext(ctx).Clauses(dbresolver.Read)
+func (l logDo) ReadDB() *logDo {
+	return l.Clauses(dbresolver.Read)
 }
 
-func (l logDo) WriteDB(ctx context.Context) *logDo {
-	return l.WithContext(ctx).Clauses(dbresolver.Write)
+func (l logDo) WriteDB() *logDo {
+	return l.Clauses(dbresolver.Write)
+}
+
+func (l logDo) Session(config *gorm.Session) *logDo {
+	return l.withDO(l.DO.Session(config))
 }
 
 func (l logDo) Clauses(conds ...clause.Expression) *logDo {
@@ -354,6 +363,14 @@ func (l logDo) ScanByPage(result interface{}, offset int, limit int) (count int6
 
 	err = l.Offset(offset).Limit(limit).Scan(result)
 	return
+}
+
+func (l logDo) Scan(result interface{}) (err error) {
+	return l.DO.Scan(result)
+}
+
+func (l logDo) Delete(models ...*model.Log) (result gen.ResultInfo, err error) {
+	return l.DO.Delete(models)
 }
 
 func (l *logDo) withDO(do gen.Dao) *logDo {

@@ -32,7 +32,11 @@ func main() {
 	defer close()
 	g.UseDB(db)
 
-	g.ApplyBasic(g.GenerateAllTable()...)
+	logModel := g.GenerateModel("log")
+	zonaModel := g.GenerateModel("zona")
+	zonaVehiculoModel := g.GenerateModel("zona_vehiculos")
+
+	g.ApplyBasic(logModel, zonaModel, zonaVehiculoModel)
 
 	// apply basic crud api on structs or table models which is specified by table name with function
 	// GenerateModel/GenerateModelAs. And generator will generate table models' code when calling Excute.
