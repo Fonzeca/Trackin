@@ -28,9 +28,9 @@ func main() {
 
 	// reuse the database connection in Project or create a connection here
 	// if you want to use GenerateModel/GenerateModelAs, UseDB is necessary or it will panic
-	db, close, _ := db.ObtenerConexionDb()
-	defer close()
-	g.UseDB(db)
+	db.InitDB()
+	defer db.CloseDB()
+	g.UseDB(db.DB)
 
 	logModel := g.GenerateModel("log")
 	zonaModel := g.GenerateModel("zona")

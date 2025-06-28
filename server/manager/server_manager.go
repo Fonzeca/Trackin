@@ -21,19 +21,13 @@ func (ma *Manager) getId() int32 {
 }
 
 func (ma *Manager) GetLastLogByImei(imei string) (model.LastLogView, error) {
-	db, close, err := db.ObtenerConexionDb()
-	if err != nil {
-		return model.LastLogView{}, err
-	}
-	defer close()
-
 	var log model.Log
 	lastpoint, ok := services.GetCachedPoints(imei)
 	if ok && lastpoint != nil {
 		log = *lastpoint
 	} else {
 		log = model.Log{}
-		db.Select("imei", "latitud", "longitud", "speed", "date").Order("date desc").Where("imei = ?", imei).First(&log)
+		db.DB.Select("imei", "latitud", "longitud", "speed", "date").Order("date desc").Where("imei = ?", imei).First(&log)
 
 		services.SetCachedPoints(imei, &log)
 	}
@@ -52,12 +46,6 @@ func (ma *Manager) GetLastLogByImei(imei string) (model.LastLogView, error) {
 }
 
 func (ma *Manager) GetVehiclesStateByImeis(only string, imeis model.ImeisBody) ([]model.StateLogView, error) {
-	db, close, err := db.ObtenerConexionDb()
-	if err != nil {
-		return nil, err
-	}
-	defer close()
-
 	logs := []model.Log{}
 	for _, imei := range imeis.Imeis {
 		var log model.Log
@@ -68,9 +56,9 @@ func (ma *Manager) GetVehiclesStateByImeis(only string, imeis model.ImeisBody) (
 		} else {
 			log = model.Log{}
 			if only != "" {
-				db.Select("imei", only, "date").Where("imei = ?", imei).Order("date DESC").First(&log)
+				db.DB.Select("imei", only, "date").Where("imei = ?", imei).Order("date DESC").First(&log)
 			} else {
-				db.Select("imei", "latitud", "longitud", "engine_status", "azimuth", "date").Where("imei = ?", imei).Order("date DESC").First(&log)
+				db.DB.Select("imei", "latitud", "longitud", "engine_status", "azimuth", "date").Where("imei = ?", imei).Order("date DESC").First(&log)
 			}
 
 			go services.SetCachedPoints(imei, &log)
@@ -97,14 +85,8 @@ func (ma *Manager) GetVehiclesStateByImeis(only string, imeis model.ImeisBody) (
 }
 
 func (ma *Manager) GetRouteByImei(requestRoute model.RouteRequest) ([]interface{}, error) {
-	db, close, err := db.ObtenerConexionDb()
-	if err != nil {
-		return nil, err
-	}
-	defer close()
-
 	logs := []model.Log{}
-	tx := db.Select("date", "latitud", "longitud", "speed", "mileage", "engine_status", "azimuth").Where("imei = ? AND date BETWEEN ? AND ?", requestRoute.Imei, requestRoute.From, requestRoute.To).Order("date ASC").Find(&logs)
+	tx := db.DB.Select("date", "latitud", "longitud", "speed", "mileage", "engine_status", "azimuth").Where("imei = ? AND date BETWEEN ? AND ?", requestRoute.Imei, requestRoute.From, requestRoute.To).Order("date ASC").Find(&logs)
 
 	routes := []interface{}{}
 	movingData := []model.RouteDataView{}

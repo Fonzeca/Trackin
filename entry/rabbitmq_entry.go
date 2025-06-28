@@ -49,11 +49,6 @@ func NewRabbitMqDataEntry() RabbitMqDataEntry {
 }
 
 func (m *RabbitMqDataEntry) Run() {
-	db, close, err := db.ObtenerConexionDb()
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer close()
 	for message := range m.inputs {
 
 		switch message.RoutingKey {
@@ -69,7 +64,7 @@ func (m *RabbitMqDataEntry) Run() {
 
 			pojo.PayLoad = string(message.Body)
 
-			err = DataEntryManager.ProcessData(pojo, db)
+			err = DataEntryManager.ProcessData(pojo, db.DB)
 			if err != nil {
 				fmt.Println(err)
 				break

@@ -28,13 +28,6 @@ func newZonasManager() IZonasManager {
 // GetZonesByEmpresaId obtiene todas las zonas de una empresa, incluyendo las asociadas y no asociadas a vehículos.
 // Retorna una lista de ZoneRequest, agrupando los imeis de los vehículos asociados a cada zona.
 func (ma *zonasManager) GetZonesByEmpresaId(idParam string) ([]model.ZoneRequest, error) {
-	db, close, err := db.ObtenerConexionDb()
-
-	if err != nil {
-		return nil, err
-	}
-	defer close()
-
 	id, idParseErr := strconv.Atoi(idParam)
 	if idParseErr != nil {
 		return nil, idParseErr
@@ -42,7 +35,7 @@ func (ma *zonasManager) GetZonesByEmpresaId(idParam string) ([]model.ZoneRequest
 
 	// Consulta única con LEFT JOIN para traer zonas con y sin vehículos asociados
 	zones := []model.ZoneView{}
-	tx := db.Model(&model.Zona{}).
+	tx := db.DB.Model(&model.Zona{}).
 		Select("zona.id, zona.empresa_id, zona.color_linea, zona.color_relleno, zona.puntos, zona.nombre, zona.velocidad_maxima, zona_vehiculos.imei, zona_vehiculos.avisar_entrada, zona_vehiculos.avisar_salida").
 		Joins("LEFT JOIN zona_vehiculos ON zona.id = zona_vehiculos.zona_id").
 		Where("zona.empresa_id = ?", id).
@@ -89,13 +82,7 @@ func (ma *zonasManager) GetZonesByEmpresaId(idParam string) ([]model.ZoneRequest
 }
 
 func (ma *zonasManager) CreateZone(zoneRequest model.ZoneRequest) error {
-	db, close, err := db.ObtenerConexionDb()
-	if err != nil {
-		return err
-	}
-	defer close()
-
-	transactionErr := db.Transaction(func(tx *gorm.DB) error {
+	transactionErr := db.DB.Transaction(func(tx *gorm.DB) error {
 
 		zone := model.Zona{
 			EmpresaID:       int32(zoneRequest.EmpresaId),
@@ -132,12 +119,6 @@ func (ma *zonasManager) CreateZone(zoneRequest model.ZoneRequest) error {
 }
 
 func (ma *zonasManager) EditZoneById(idParam string, zoneRequest model.ZoneRequest) error {
-	db, close, err := db.ObtenerConexionDb()
-	if err != nil {
-		return err
-	}
-	defer close()
-
 	id, idParseErr := strconv.Atoi(idParam)
 
 	if idParseErr != nil {
@@ -153,13 +134,13 @@ func (ma *zonasManager) EditZoneById(idParam string, zoneRequest model.ZoneReque
 		Nombre:          zoneRequest.Nombre,
 		VelocidadMaxima: zoneRequest.VelocidadMaxima,
 	}
-	tx := db.Save(&zone)
+	tx := db.DB.Save(&zone)
 
 	if tx.Error != nil {
 		return tx.Error
 	}
 
-	tx = db.Where("zona_id = ?", id).Delete(&model.ZonaVehiculo{})
+	tx = db.DB.Where("zona_id = ?", id).Delete(&model.ZonaVehiculo{})
 
 	if len(zoneRequest.Imeis) > 0 {
 		zonesWithVehicles := []model.ZonaVehiculo{}
@@ -172,23 +153,13 @@ func (ma *zonasManager) EditZoneById(idParam string, zoneRequest model.ZoneReque
 			})
 		}
 
-		tx = db.Create(&zonesWithVehicles)
+		tx = db.DB.Create(&zonesWithVehicles)
 	}
 
 	return tx.Error
 }
 
 func (ma *zonasManager) DeleteZoneById(idParam string) error {
-	db, close, err := db.ObtenerConexionDb()
-	if err != nil {
-		return err
-	}
-	defer close()
-
-	if err != nil {
-		return err
-	}
-
 	id, idParseErr := strconv.Atoi(idParam)
 
 	if idParseErr != nil {
@@ -196,29 +167,19 @@ func (ma *zonasManager) DeleteZoneById(idParam string) error {
 	}
 
 	zone := model.Zona{ID: int32(id)}
-	tx := db.Delete(&zone)
+	tx := db.DB.Delete(&zone)
 
 	return tx.Error
 }
 
 func (ma *zonasManager) GetZoneConfigByImei(imei string) ([]model.ZoneView, error) {
-	db, close, err := db.ObtenerConexionDb()
-	if err != nil {
-		return []model.ZoneView{}, err
-	}
-	defer close()
-
 	zoneConfig := []model.ZoneView{}
 
-	tx := db.Model(&model.ZonaVehiculo{}).
+	tx := db.DB.Model(&model.ZonaVehiculo{}).
 		Select("zona.puntos, zona.nombre, zona.id, zona_vehiculos.avisar_entrada, zona_vehiculos.avisar_salida, zona.velocidad_maxima").
 		Joins("join zona on zona.id = zona_vehiculos.zona_id").
 		Where("imei = ?", imei).
 		Scan(&zoneConfig)
-
-	if err != nil {
-		return []model.ZoneView{}, err
-	}
 
 	return zoneConfig, tx.Error
 }

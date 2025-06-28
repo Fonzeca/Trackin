@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/Fonzeca/Trackin/db"
 	"github.com/Fonzeca/Trackin/entry"
 	"github.com/Fonzeca/Trackin/server"
 	"github.com/Fonzeca/Trackin/services"
@@ -13,7 +14,11 @@ import (
 
 func main() {
 	InitConfig()
+
 	// go monitor.System()
+	db.InitDB()
+	defer db.CloseDB()
+
 	_, closeFunc := services.SetupRabbitMq()
 	defer closeFunc()
 	entry.NewRabbitMqDataEntry()
