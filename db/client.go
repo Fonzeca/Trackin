@@ -16,27 +16,29 @@ func InitDB() {
 	//TODO: Cambiarlo por Viper
 	host := os.Getenv("trackinDbHost")
 	if host == "" {
-		host = "vps-2367826-x.dattaweb.com:3306"
+		host = "db:3306"
 	}
 
 	user := os.Getenv("trackinDbUser")
 	if user == "" {
-		user = "root"
+		user = "username"
 	}
 	pass := os.Getenv("trackinDbPass")
 	if pass == "" {
-		pass = "carmind-db"
+		pass = "pass"
 	}
 
 	dsn := user + ":" + pass + "@tcp(" + host + ")/trackin?parseTime=True"
 
 	var err error
-	DB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+	dbMinus, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
 		log.Fatalf("Error al conectar a la base de datos: %v", err)
 	}
+
+	DB = dbMinus
 
 	sqlDB, err := DB.DB()
 	if err != nil {
