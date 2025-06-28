@@ -61,7 +61,9 @@ func (m *RabbitMqDataEntry) Run() {
 			pojo := model_json.SimplyData{}
 			err := json.Unmarshal(message.Body, &pojo)
 			if err != nil {
+				fmt.Println("Error al deserializar el mensaje:", string(message.Body))
 				fmt.Println(err)
+				message.Ack(false)
 				break
 			}
 
