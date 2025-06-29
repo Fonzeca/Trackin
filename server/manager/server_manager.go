@@ -21,25 +21,37 @@ func (ma *Manager) getId() int32 {
 }
 
 func (ma *Manager) GetLastLogByImei(imei string) (model.LastLogView, error) {
-	var log model.Log
-	lastpoint, ok := services.GetCachedPoints(imei)
-	if ok && lastpoint != nil {
-		log = *lastpoint
-	} else {
-		log = model.Log{}
-		db.DB.Select("imei", "latitud", "longitud", "speed", "date").Order("date desc").Where("imei = ?", imei).First(&log)
+	// Usamos la nueva función con lock para evitar consultas duplicadas
+	log, wasInCache := services.GetCachedPointsWithLock(imei, func() *model.Log {
+		logResult := &model.Log{}
+		db.DB.Select("imei", "latitud", "longitud", "speed", "date").Order("date desc").Where("imei = ?", imei).First(logResult)
 
-		services.SetCachedPoints(imei, &log)
+		if logResult.Imei == "" {
+			return nil
+		}
+		return logResult
+	})
+
+	// Solo actualizamos el caché en segundo plano si no estaba previamente cacheado
+	if !wasInCache && log != nil {
+		services.SetCachedPoints(imei, log)
 	}
 
-	lastLog := model.LastLogView{
-		Imei: log.Imei,
-		Location: model.Location{
-			Latitutd: log.Latitud,
-			Longitud: log.Longitud,
-		},
-		Speed: log.Speed,
-		Date:  log.Date,
+	var lastLog model.LastLogView
+	if log != nil {
+		lastLog = model.LastLogView{
+			Imei: log.Imei,
+			Location: model.Location{
+				Latitutd: log.Latitud,
+				Longitud: log.Longitud,
+			},
+			Speed: log.Speed,
+			Date:  log.Date,
+		}
+	} else {
+		lastLog = model.LastLogView{
+			Imei: imei,
+		}
 	}
 
 	return lastLog, nil
@@ -48,23 +60,22 @@ func (ma *Manager) GetLastLogByImei(imei string) (model.LastLogView, error) {
 func (ma *Manager) GetVehiclesStateByImeis(only string, imeis model.ImeisBody) ([]model.StateLogView, error) {
 	logs := []model.Log{}
 	for _, imei := range imeis.Imeis {
-		var log model.Log
+		// Usamos la nueva función con lock para evitar consultas duplicadas
+		log, wasInCache := services.GetCachedPointsWithLock(imei, func() *model.Log {
+			return queryLogFromDB(imei, only)
+		})
 
-		lastpoint, ok := services.GetCachedPoints(imei)
-		if ok && lastpoint != nil {
-			log = *lastpoint
+		if log != nil {
+			logs = append(logs, *log)
 		} else {
-			log = model.Log{}
-			if only != "" {
-				db.DB.Select("imei", only, "date").Where("imei = ?", imei).Order("date DESC").First(&log)
-			} else {
-				db.DB.Select("imei", "latitud", "longitud", "engine_status", "azimuth", "date").Where("imei = ?", imei).Order("date DESC").First(&log)
-			}
-
-			go services.SetCachedPoints(imei, &log)
+			// Si no se encontró nada, agregamos un log vacío
+			logs = append(logs, model.Log{Imei: imei})
 		}
 
-		logs = append(logs, log)
+		// Solo actualizamos el caché en segundo plano si no estaba previamente cacheado
+		if !wasInCache && log != nil {
+			go services.SetCachedPoints(imei, log)
+		}
 	}
 
 	stateLogsView := []model.StateLogView{}
@@ -181,4 +192,21 @@ func saveMovingLog(index int, fromDate string, fromHour string, id int32, routes
 		KM:   ((*logs)[index].Mileage - initialMileage) / 1000,
 		Data: movingData,
 	})
+}
+
+// queryLogFromDB ejecuta la consulta a la base de datos para obtener el último log
+func queryLogFromDB(imei, only string) *model.Log {
+	log := &model.Log{}
+	if only != "" {
+		db.DB.Select("imei", only, "date").Where("imei = ?", imei).Order("date DESC").First(log)
+	} else {
+		db.DB.Select("imei", "latitud", "longitud", "engine_status", "azimuth", "date").Where("imei = ?", imei).Order("date DESC").First(log)
+	}
+
+	// Si no se encontró nada, retornamos nil
+	if log.Imei == "" {
+		return nil
+	}
+
+	return log
 }
