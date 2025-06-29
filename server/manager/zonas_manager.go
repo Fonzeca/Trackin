@@ -48,6 +48,7 @@ func (ma *zonasManager) GetZonesByEmpresaId(idParam string) ([]model.ZoneRequest
 
 	// Agrupar los resultados por zona
 	zoneMap := make(map[int32]*model.ZoneRequest)
+	zoneIds := make([]int32, 0, len(zones))
 	for _, zone := range zones {
 		zr, exists := zoneMap[zone.Id]
 		if !exists {
@@ -64,6 +65,7 @@ func (ma *zonasManager) GetZonesByEmpresaId(idParam string) ([]model.ZoneRequest
 				VelocidadMaxima: zone.VelocidadMaxima,
 			}
 			zoneMap[zone.Id] = zr
+			zoneIds = append(zoneIds, zone.Id)
 		}
 		if zone.Imei != "" {
 			zr.Imeis = append(zr.Imeis, zone.Imei)
@@ -74,8 +76,8 @@ func (ma *zonasManager) GetZonesByEmpresaId(idParam string) ([]model.ZoneRequest
 
 	// Convertir el mapa a slice
 	result := make([]model.ZoneRequest, 0, len(zoneMap))
-	for _, v := range zoneMap {
-		result = append(result, *v)
+	for _, v := range zoneIds {
+		result = append(result, *zoneMap[v])
 	}
 
 	return result, nil
