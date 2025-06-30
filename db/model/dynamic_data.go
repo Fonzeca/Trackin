@@ -22,33 +22,6 @@ type StateLogView struct {
 	Date         time.Time `json:"date"`
 }
 
-type RouteView struct {
-	Id       int32  `json:"id"`
-	Type     string `json:"type"`
-	FromDate string `json:"fromDate"`
-	ToDate   string `json:"toDate"`
-	FromHour string `json:"fromHour"`
-	ToHour   string `json:"toHour"`
-}
-
-type RouteDataView struct {
-	Location
-	Speed     float32 `json:"speed"`
-	Azimuth   int32   `json:"azimuth,omitempty"`
-	Timestamp int64   `json:"timestamp,omitempty"`
-}
-
-type StopView struct {
-	RouteView
-	Location
-}
-
-type MoveView struct {
-	RouteView
-	KM   int32           `json:"km"`
-	Data []RouteDataView `json:"data"`
-}
-
 type RouteRequest struct {
 	Imei string `json:"imei"`
 	From string `json:"from"`
@@ -97,4 +70,26 @@ type ZoneNotification struct {
 	ZoneName  string `json:"zone_name,omitempty"`
 	ZoneID    int    `json:"zone_id,omitempty"`
 	EventType string `json:"event_type,omitempty"`
+}
+
+type GpsPoint struct {
+	Azimuth   int32   `json:"azimuth"`
+	Latitud   float64 `json:"latitud"`
+	Longitud  float64 `json:"longitud"`
+	Speed     float32 `json:"speed"`
+	Timestamp int64   `json:"timestamp"`
+}
+
+type GpsRouteData struct {
+	Id       int32      `json:"id"`
+	Type     string     `json:"type"`
+	FromDate string     `json:"fromDate"`
+	ToDate   string     `json:"toDate"`
+	FromHour string     `json:"fromHour"`
+	ToHour   string     `json:"toHour"`
+	Duration string     `json:"duration"`
+	Latitud  float64    `json:"latitud,omitempty"`
+	Longitud float64    `json:"longitud,omitempty"`
+	Km       int32      `json:"km,omitempty"`
+	Data     []GpsPoint `json:"data,omitempty"`
 }
