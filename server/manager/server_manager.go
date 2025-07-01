@@ -140,6 +140,16 @@ func (ma *Manager) GetRouteByImei(requestRoute model.RouteRequest) ([]model.GpsR
 		}
 
 		if isInStop {
+
+			if index+1 < len(logs) {
+				if !logs[index+1].EngineStatus &&
+					logs[index+1].Latitud == log.Latitud &&
+					logs[index+1].Longitud == log.Longitud {
+					// Si el siguiente log también es una parada, no guardamos el log de parada
+					continue
+				}
+			}
+
 			isInStop = false
 			saveStopLog(index-1, fromDate, fromHour, ma.getId(), &routes, &logs)
 		}
@@ -237,7 +247,7 @@ func (ma *Manager) cleanUpRouteBySpeedAnomaly(route []model.Log) []model.Log {
 	cleanedRoute := []model.Log{}
 	const speedThreshold = 350.0 // Umbral de velocidad en km/h
 
-	if len(route) < 1 {
+	if len(route) <= 1 {
 		return route
 	}
 
