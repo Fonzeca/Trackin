@@ -52,7 +52,10 @@ func (d *DataEntryManager) ProcessData(data json.SimplyData, db *gorm.DB) error 
 		return err
 	}
 
-	go services.SetCachedPoints(data.Imei, &log)
+	lastPoint, ok := services.GetCachedPoints(data.Imei)
+	if ok && services.IsValidPoint(lastPoint, &log) {
+		go services.SetCachedPoints(data.Imei, &log)
+	}
 
 	// d.geofenceService.DispatchMessage(data)
 
