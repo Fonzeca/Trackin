@@ -7,6 +7,7 @@ import (
 
 	"github.com/Fonzeca/Trackin/db"
 	model_json "github.com/Fonzeca/Trackin/entry/json"
+	"github.com/Fonzeca/Trackin/server/manager"
 	"github.com/Fonzeca/Trackin/services"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -49,6 +50,12 @@ func NewRabbitMqDataEntry() RabbitMqDataEntry {
 }
 
 func (m *RabbitMqDataEntry) Run() {
+	entryManager := manager.GetManagerContainer().GetDataEntryManager()
+	if entryManager == nil {
+		fmt.Println("DataEntryManager is not initialized")
+		return
+	}
+
 	for message := range m.inputs {
 
 		switch message.RoutingKey {
@@ -64,7 +71,7 @@ func (m *RabbitMqDataEntry) Run() {
 
 			pojo.PayLoad = string(message.Body)
 
-			err = DataEntryManager.ProcessData(pojo, db.DB)
+			err = entryManager.ProcessData(pojo, db.DB)
 			if err != nil {
 				fmt.Println(err)
 				break

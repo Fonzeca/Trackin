@@ -15,15 +15,22 @@ type IZonasManager interface {
 	DeleteZoneById(idParam string) error
 	GetZoneConfigByImei(imei string) ([]model.ZoneView, error)
 	GetZoneByIds(ids []int32) ([]model.ZoneView, error)
+
+	// Setter para inyección de dependencias
+	SetRoutesManager(routesManager IRoutesManager)
 }
 
-var ZonasManager IZonasManager = newZonasManager()
-
 type zonasManager struct {
+	routesManager IRoutesManager
 }
 
 func newZonasManager() IZonasManager {
 	return &zonasManager{}
+}
+
+// SetRoutesManager inyecta la dependencia del routes manager
+func (ma *zonasManager) SetRoutesManager(routesManager IRoutesManager) {
+	ma.routesManager = routesManager
 }
 
 // GetZonesByEmpresaId obtiene todas las zonas de una empresa, incluyendo las asociadas y no asociadas a vehículos.

@@ -13,14 +13,12 @@ func Router(c *echo.Echo) error {
 }
 
 type api struct {
-	routesManager manager.RoutesManager
-	zonasManager  manager.IZonasManager
+	container *manager.ManagerContainer
 }
 
 func NewApi() api {
-	routesManager := manager.InitializeRoutesManager()
-	zonasManager := manager.ZonasManager
-	return api{routesManager: routesManager, zonasManager: zonasManager}
+	container := manager.GetManagerContainer()
+	return api{container: container}
 }
 
 func (api *api) GetLastLogByImei(c echo.Context) error {
@@ -37,7 +35,7 @@ func (api *api) GetLastLogByImei(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "Parámetro imei incorrecto")
 	}
 
-	log, logErr := api.routesManager.GetLastLogByImei(imei)
+	log, logErr := api.container.GetRoutesManager().GetLastLogByImei(imei)
 
 	if logErr != nil {
 		return c.JSON(http.StatusNotFound, logErr.Error())
@@ -53,7 +51,7 @@ func (api *api) GetVehiclesStateByImeis(c echo.Context) error {
 	val, _ := c.FormParams()
 	only := val.Get("only")
 
-	logs, logErr := api.routesManager.GetVehiclesStateByImeis(only, data)
+	logs, logErr := api.container.GetRoutesManager().GetVehiclesStateByImeis(only, data)
 
 	if logErr != nil {
 		return c.JSON(http.StatusNotFound, logErr.Error())
@@ -67,13 +65,13 @@ func (api *api) GetRouteByImei(c echo.Context) error {
 	c.Bind(&data)
 
 	if len(data.ZonesIds) > 0 {
-		zones, zoneErr := api.zonasManager.GetZoneByIds(data.ZonesIds)
+		zones, zoneErr := api.container.GetZonasManager().GetZoneByIds(data.ZonesIds)
 		if zoneErr != nil {
 			return c.JSON(http.StatusNotFound, zoneErr.Error())
 		}
 
 		// Si se encontraron zonas, las pasamos a la función de la ruta
-		route, logErr := api.routesManager.GetRouteByImeiAndZones(data, zones)
+		route, logErr := api.container.GetRoutesManager().GetRouteByImeiAndZones(data, zones)
 		if logErr != nil {
 			return c.JSON(http.StatusNotFound, logErr.Error())
 		}
@@ -81,7 +79,7 @@ func (api *api) GetRouteByImei(c echo.Context) error {
 		return c.JSON(http.StatusOK, route)
 	} else {
 		// Si no se especifican zonas, obtenemos la ruta por IMEI sin zonas
-		route, logErr := api.routesManager.GetRouteByImei(data)
+		route, logErr := api.container.GetRoutesManager().GetRouteByImei(data)
 
 		if logErr != nil {
 			return c.JSON(http.StatusNotFound, logErr.Error())
@@ -95,7 +93,7 @@ func (api *api) GetZonesByEmpresaId(c echo.Context) error {
 	val, _ := c.FormParams()
 	id := val.Get("id")
 
-	zones, zoneErr := api.zonasManager.GetZonesByEmpresaId(id)
+	zones, zoneErr := api.container.GetZonasManager().GetZonesByEmpresaId(id)
 
 	if zoneErr != nil {
 		return c.JSON(http.StatusNotFound, zoneErr.Error())
@@ -108,7 +106,7 @@ func (api *api) CreateZone(c echo.Context) error {
 	data := model.ZoneRequest{}
 	c.Bind(&data)
 
-	zoneErr := api.zonasManager.CreateZone(data)
+	zoneErr := api.container.GetZonasManager().CreateZone(data)
 
 	if zoneErr != nil {
 		return c.JSON(http.StatusBadRequest, zoneErr.Error())
@@ -124,7 +122,7 @@ func (api *api) EditZoneById(c echo.Context) error {
 	val, _ := c.FormParams()
 	id := val.Get("id")
 
-	zoneErr := api.zonasManager.EditZoneById(id, data)
+	zoneErr := api.container.GetZonasManager().EditZoneById(id, data)
 
 	if zoneErr != nil {
 		return c.JSON(http.StatusBadRequest, zoneErr.Error())
@@ -137,7 +135,7 @@ func (api *api) DeleteZoneById(c echo.Context) error {
 	val, _ := c.FormParams()
 	id := val.Get("id")
 
-	zoneErr := api.zonasManager.DeleteZoneById(id)
+	zoneErr := api.container.GetZonasManager().DeleteZoneById(id)
 
 	if zoneErr != nil {
 		return c.JSON(http.StatusBadRequest, zoneErr.Error())

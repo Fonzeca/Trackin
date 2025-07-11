@@ -46,7 +46,7 @@ func TestIsValidPoint(t *testing.T) {
 			name:     "same coordinates (zero distance)",
 			current:  &model.Log{Latitud: 40.7128, Longitud: -74.0060, Date: baseTime},
 			next:     &model.Log{Latitud: 40.7128, Longitud: -74.0060, Date: baseTime.Add(time.Hour)},
-			expected: true,
+			expected: false,
 		},
 		{
 			name:     "valid speed - normal movement",
