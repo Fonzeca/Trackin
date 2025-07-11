@@ -1,6 +1,10 @@
 package services
 
 import (
+	"fmt"
+	"strconv"
+	"strings"
+
 	"github.com/Fonzeca/Trackin/db/model"
 	"github.com/golang/geo/s2"
 )
@@ -35,4 +39,67 @@ func IsValidPoint(current, next *model.Log) bool {
 	speed := distance / timeDifference
 
 	return speed <= thresholdKmh
+}
+
+func ParseZonesToPolygon(zones []model.ZoneView) (*s2.Polygon, error) {
+	if len(zones) == 0 {
+		return nil, fmt.Errorf("no zones provided")
+	}
+
+	var allLoops []*s2.Loop
+
+	// Iterate through each zone and convert the points to a polygon
+
+	for _, zone := range zones {
+		if zone.Puntos != "" {
+			pointsStr := strings.Split(zone.Puntos, ";")
+			points := make([]s2.Point, 0, len(pointsStr))
+
+			for _, pointStr := range pointsStr {
+				point, err := getPointFromString(pointStr)
+				if err != nil {
+					continue
+				}
+				points = append(points, *point)
+			}
+
+			// Ensure the points are in the correct order and form a closed loop
+			// Only create a polygon if there are enough points
+			if len(points) > 1 {
+				loop := s2.LoopFromPoints(points)
+
+				loop.Normalize() // Normalize the loop to ensure it is valid
+
+				allLoops = append(allLoops, loop)
+			}
+		}
+	}
+
+	if len(allLoops) == 0 {
+		return nil, fmt.Errorf("no valid zones found")
+	}
+
+	return s2.PolygonFromLoops(allLoops), nil
+}
+
+func getPointFromString(pointStr string) (*s2.Point, error) {
+	coords := strings.Split(pointStr, ",")
+	if len(coords) != 2 {
+		return nil, fmt.Errorf("invalid point format: %s", pointStr)
+	}
+
+	lat, err := strconv.ParseFloat(coords[0], 64)
+	if err != nil {
+		return nil, err
+	}
+
+	lng, err := strconv.ParseFloat(coords[1], 64)
+	if err != nil {
+		return nil, err
+	}
+
+	latLng := s2.LatLngFromDegrees(lat, lng)
+	point := s2.PointFromLatLng(latLng)
+
+	return &point, nil
 }

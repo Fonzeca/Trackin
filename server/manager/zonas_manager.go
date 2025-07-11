@@ -14,6 +14,7 @@ type IZonasManager interface {
 	EditZoneById(idParam string, zoneRequest model.ZoneRequest) error
 	DeleteZoneById(idParam string) error
 	GetZoneConfigByImei(imei string) ([]model.ZoneView, error)
+	GetZoneByIds(ids []int32) ([]model.ZoneView, error)
 }
 
 var ZonasManager IZonasManager = newZonasManager()
@@ -159,6 +160,17 @@ func (ma *zonasManager) EditZoneById(idParam string, zoneRequest model.ZoneReque
 	}
 
 	return tx.Error
+}
+
+func (ma *zonasManager) GetZoneByIds(ids []int32) ([]model.ZoneView, error) {
+	var zones []model.ZoneView
+	tx := db.DB.Where("id IN ?", ids).Find(&zones)
+
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	return zones, nil
 }
 
 func (ma *zonasManager) DeleteZoneById(idParam string) error {

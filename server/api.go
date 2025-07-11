@@ -13,14 +13,14 @@ func Router(c *echo.Echo) error {
 }
 
 type api struct {
-	manager      manager.Manager
-	zonasManager manager.IZonasManager
+	routesManager manager.RoutesManager
+	zonasManager  manager.IZonasManager
 }
 
 func NewApi() api {
-	m := manager.NewManager()
+	routesManager := manager.InitializeRoutesManager()
 	zonasManager := manager.ZonasManager
-	return api{manager: m, zonasManager: zonasManager}
+	return api{routesManager: routesManager, zonasManager: zonasManager}
 }
 
 func (api *api) GetLastLogByImei(c echo.Context) error {
@@ -37,7 +37,7 @@ func (api *api) GetLastLogByImei(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "Parámetro imei incorrecto")
 	}
 
-	log, logErr := api.manager.GetLastLogByImei(imei)
+	log, logErr := api.routesManager.GetLastLogByImei(imei)
 
 	if logErr != nil {
 		return c.JSON(http.StatusNotFound, logErr.Error())
@@ -53,7 +53,7 @@ func (api *api) GetVehiclesStateByImeis(c echo.Context) error {
 	val, _ := c.FormParams()
 	only := val.Get("only")
 
-	logs, logErr := api.manager.GetVehiclesStateByImeis(only, data)
+	logs, logErr := api.routesManager.GetVehiclesStateByImeis(only, data)
 
 	if logErr != nil {
 		return c.JSON(http.StatusNotFound, logErr.Error())
@@ -66,13 +66,29 @@ func (api *api) GetRouteByImei(c echo.Context) error {
 	data := model.RouteRequest{}
 	c.Bind(&data)
 
-	route, logErr := api.manager.GetRouteByImei(data)
+	if len(data.ZonesIds) > 0 {
+		zones, zoneErr := api.zonasManager.GetZoneByIds(data.ZonesIds)
+		if zoneErr != nil {
+			return c.JSON(http.StatusNotFound, zoneErr.Error())
+		}
 
-	if logErr != nil {
-		return c.JSON(http.StatusNotFound, logErr.Error())
+		// Si se encontraron zonas, las pasamos a la función de la ruta
+		route, logErr := api.routesManager.GetRouteByImeiAndZones(data, zones)
+		if logErr != nil {
+			return c.JSON(http.StatusNotFound, logErr.Error())
+		}
+
+		return c.JSON(http.StatusOK, route)
+	} else {
+		// Si no se especifican zonas, obtenemos la ruta por IMEI sin zonas
+		route, logErr := api.routesManager.GetRouteByImei(data)
+
+		if logErr != nil {
+			return c.JSON(http.StatusNotFound, logErr.Error())
+		}
+
+		return c.JSON(http.StatusOK, route)
 	}
-
-	return c.JSON(http.StatusOK, route)
 }
 
 func (api *api) GetZonesByEmpresaId(c echo.Context) error {

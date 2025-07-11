@@ -9,21 +9,21 @@ import (
 	"github.com/Fonzeca/Trackin/services"
 )
 
-type Manager struct {
+type RoutesManager struct {
 	//Variable para setear ids para las vistas
 	id int32
 }
 
-func NewManager() Manager {
-	return Manager{id: 0}
+func InitializeRoutesManager() RoutesManager {
+	return RoutesManager{id: 0}
 }
 
-func (ma *Manager) getId() int32 {
+func (ma *RoutesManager) getId() int32 {
 	ma.id++
 	return ma.id
 }
 
-func (ma *Manager) GetLastLogByImei(imei string) (model.LastLogView, error) {
+func (ma *RoutesManager) GetLastLogByImei(imei string) (model.LastLogView, error) {
 	// Usamos la nueva función con lock para evitar consultas duplicadas
 	log, wasInCache := services.GetCachedPointsWithLock(imei, func() *model.Log {
 		logResult := &model.Log{}
@@ -60,7 +60,7 @@ func (ma *Manager) GetLastLogByImei(imei string) (model.LastLogView, error) {
 	return lastLog, nil
 }
 
-func (ma *Manager) GetVehiclesStateByImeis(only string, imeis model.ImeisBody) ([]model.StateLogView, error) {
+func (ma *RoutesManager) GetVehiclesStateByImeis(only string, imeis model.ImeisBody) ([]model.StateLogView, error) {
 	logs := []model.Log{}
 	for _, imei := range imeis.Imeis {
 		// Usamos la nueva función con lock para evitar consultas duplicadas
@@ -98,7 +98,15 @@ func (ma *Manager) GetVehiclesStateByImeis(only string, imeis model.ImeisBody) (
 	return stateLogsView, nil
 }
 
-func (ma *Manager) GetRouteByImei(requestRoute model.RouteRequest) ([]model.GpsRouteData, error) {
+func (ma *RoutesManager) GetRouteByImeiAndZones(requestRoute model.RouteRequest, zones []model.ZoneView) ([]model.GpsRouteData, error) {
+	// Esta función no está implementada en el código original
+	// Aquí podrías implementar la lógica para obtener rutas por IMEI y zonas
+	log.Println("GetRouteByImeiAndZones is not implemented")
+
+	return nil, nil
+}
+
+func (ma *RoutesManager) GetRouteByImei(requestRoute model.RouteRequest) ([]model.GpsRouteData, error) {
 	logs := []model.Log{}
 	tx := db.DB.Select("date", "latitud", "longitud", "speed", "mileage", "engine_status", "azimuth").
 		Where("imei = ? AND date BETWEEN ? AND ?", requestRoute.Imei, requestRoute.From, requestRoute.To).
@@ -243,7 +251,7 @@ func distanceOf2Points(lat1, lon1, lat2, lon2 float64) float64 {
 }
 
 // cleanUpRouteBySpeedAnomaly limpia una ruta eliminando puntos con anomalías de velocidad
-func (ma *Manager) cleanUpRouteBySpeedAnomaly(route []model.Log) []model.Log {
+func (ma *RoutesManager) cleanUpRouteBySpeedAnomaly(route []model.Log) []model.Log {
 	cleanedRoute := []model.Log{}
 	const speedThreshold = 350.0 // Umbral de velocidad en km/h
 

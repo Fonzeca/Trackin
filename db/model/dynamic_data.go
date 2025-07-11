@@ -23,9 +23,10 @@ type StateLogView struct {
 }
 
 type RouteRequest struct {
-	Imei string `json:"imei"`
-	From string `json:"from"`
-	To   string `json:"to"`
+	Imei     string  `json:"imei"`
+	From     string  `json:"from"`
+	To       string  `json:"to"`
+	ZonesIds []int32 `json:"zones_ids,omitempty"`
 }
 
 type ImeisBody struct {
