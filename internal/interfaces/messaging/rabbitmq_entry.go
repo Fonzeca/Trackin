@@ -77,7 +77,7 @@ func (m *RabbitMqDataEntry) Run() {
 				break
 			}
 			message.Ack(false)
-			break
+			// break
 		}
 	}
 }
