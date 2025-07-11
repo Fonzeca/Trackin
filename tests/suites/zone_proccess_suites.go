@@ -3,8 +3,8 @@ package suites
 import (
 	"time"
 
-	"github.com/Fonzeca/Trackin/db/model"
-	modeljson "github.com/Fonzeca/Trackin/entry/json"
+	"github.com/Fonzeca/Trackin/internal/infrastructure/database/model"
+	modeljson "github.com/Fonzeca/Trackin/internal/interfaces/messaging/json"
 )
 
 type SuiteZonaProccessData struct {
