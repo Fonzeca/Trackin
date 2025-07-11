@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 
-	"github.com/Fonzeca/Trackin/db"
-	"github.com/Fonzeca/Trackin/entry"
-	"github.com/Fonzeca/Trackin/server"
-	"github.com/Fonzeca/Trackin/services"
+	db "github.com/Fonzeca/Trackin/internal/infrastructure/database"
+	messagingInfra "github.com/Fonzeca/Trackin/internal/infrastructure/messaging"
+	server "github.com/Fonzeca/Trackin/internal/interfaces/http"
+	entry "github.com/Fonzeca/Trackin/internal/interfaces/messaging"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/viper"
@@ -19,7 +19,7 @@ func main() {
 	db.InitDB()
 	defer db.CloseDB()
 
-	_, closeFunc := services.SetupRabbitMq()
+	_, closeFunc := messagingInfra.SetupRabbitMq()
 	defer closeFunc()
 	entry.NewRabbitMqDataEntry()
 
