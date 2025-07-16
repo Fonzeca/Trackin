@@ -41,45 +41,68 @@ func IsValidPoint(current, next *model.Log) bool {
 	return speed <= thresholdKmh
 }
 
-func ParseZonesToPolygon(zones []model.ZoneView) (*s2.Polygon, error) {
+// ParseZoneToLoop converts a single zone into an S2 loop
+func ParseZoneToLoop(zone model.ZoneView) (*s2.Loop, error) {
+	if zone.Puntos == "" {
+		return nil, fmt.Errorf("zone has no points")
+	}
+
+	pointsStr := strings.Split(zone.Puntos, ";")
+	points := make([]s2.Point, 0, len(pointsStr))
+
+	for _, pointStr := range pointsStr {
+		point, err := getPointFromString(pointStr)
+		if err != nil {
+			// Log the error and continue to the next point
+			fmt.Printf("Error parsing point '%s': %v\n", pointStr, err)
+			continue
+		}
+		points = append(points, *point)
+	}
+
+	// Only create a loop if there are enough points
+	if len(points) <= 1 {
+		return nil, fmt.Errorf("not enough valid points to create a loop")
+	}
+
+	loop := s2.LoopFromPoints(points)
+	loop.Normalize() // Normalize the loop to ensure it is valid
+
+	return loop, nil
+}
+
+// ParseZonesToLoops converts an array of zones into an array of S2 loops
+func ParseZonesToLoops(zones []model.ZoneView) ([]*s2.Loop, error) {
 	if len(zones) == 0 {
 		return nil, fmt.Errorf("no zones provided")
 	}
 
 	var allLoops []*s2.Loop
 
-	// Iterate through each zone and convert the points to a polygon
-
 	for _, zone := range zones {
-		if zone.Puntos != "" {
-			pointsStr := strings.Split(zone.Puntos, ";")
-			points := make([]s2.Point, 0, len(pointsStr))
-
-			for _, pointStr := range pointsStr {
-				point, err := getPointFromString(pointStr)
-				if err != nil {
-					continue
-				}
-				points = append(points, *point)
-			}
-
-			// Ensure the points are in the correct order and form a closed loop
-			// Only create a polygon if there are enough points
-			if len(points) > 1 {
-				loop := s2.LoopFromPoints(points)
-
-				loop.Normalize() // Normalize the loop to ensure it is valid
-
-				allLoops = append(allLoops, loop)
-			}
+		loop, err := ParseZoneToLoop(zone)
+		if err != nil {
+			// Continue with other zones if one fails
+			continue
 		}
+		allLoops = append(allLoops, loop)
 	}
 
 	if len(allLoops) == 0 {
 		return nil, fmt.Errorf("no valid zones found")
 	}
 
-	return s2.PolygonFromLoops(allLoops), nil
+	return allLoops, nil
+}
+
+// ParseZonesToPolygon converts an array of zones into a unified S2 polygon
+func ParseZonesToPolygon(zones []model.ZoneView) (*s2.Polygon, error) {
+	loops, err := ParseZonesToLoops(zones)
+	if err != nil {
+		return nil, err
+	}
+
+	return s2.PolygonFromLoops(loops), nil
 }
 
 func getPointFromString(pointStr string) (*s2.Point, error) {
@@ -88,12 +111,16 @@ func getPointFromString(pointStr string) (*s2.Point, error) {
 		return nil, fmt.Errorf("invalid point format: %s", pointStr)
 	}
 
-	lat, err := strconv.ParseFloat(coords[0], 64)
+	// Replace comma decimal separator with dot for both latitude and longitude
+	latStr := strings.ReplaceAll(strings.TrimSpace(coords[0]), ",", ".")
+	lngStr := strings.ReplaceAll(strings.TrimSpace(coords[1]), ",", ".")
+
+	lat, err := strconv.ParseFloat(latStr, 64)
 	if err != nil {
 		return nil, err
 	}
 
-	lng, err := strconv.ParseFloat(coords[1], 64)
+	lng, err := strconv.ParseFloat(lngStr, 64)
 	if err != nil {
 		return nil, err
 	}

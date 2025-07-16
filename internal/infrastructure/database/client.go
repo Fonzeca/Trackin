@@ -16,16 +16,16 @@ func InitDB() {
 	//TODO: Cambiarlo por Viper
 	host := os.Getenv("trackinDbHost")
 	if host == "" {
-		host = "db:3306"
+		host = "vps-2367826-x.dattaweb.com:3306"
 	}
 
 	user := os.Getenv("trackinDbUser")
 	if user == "" {
-		user = "username"
+		user = "root"
 	}
 	pass := os.Getenv("trackinDbPass")
 	if pass == "" {
-		pass = "pass"
+		pass = "carmind-db"
 	}
 
 	dsn := user + ":" + pass + "@tcp(" + host + ")/trackin?parseTime=True"
