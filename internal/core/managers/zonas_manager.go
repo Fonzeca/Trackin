@@ -9,7 +9,8 @@ import (
 )
 
 type IZonasManager interface {
-	GetZonesByEmpresaId(idParam string) ([]model.ZoneRequest, error)
+	GetZonesWithImeisByEmpresaId(idParam string) ([]model.ZoneRequest, error)
+	GetZonesByEmpresaId(empresaId int32) ([]model.Zona, error)
 	CreateZone(zoneRequest model.ZoneRequest) error
 	EditZoneById(idParam string, zoneRequest model.ZoneRequest) error
 	DeleteZoneById(idParam string) error
@@ -33,9 +34,24 @@ func (ma *zonasManager) SetRoutesManager(routesManager IRoutesManager) {
 	ma.routesManager = routesManager
 }
 
+func (ma *zonasManager) GetZonesByEmpresaId(empresaId int32) ([]model.Zona, error) {
+	zones := []model.Zona{}
+	tx := db.DB.Model(&model.Zona{}).Where("empresa_id = ?", empresaId).Find(&zones)
+
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	if len(zones) == 0 {
+		return nil, nil // No zones found
+	}
+
+	return zones, nil
+}
+
 // GetZonesByEmpresaId obtiene todas las zonas de una empresa, incluyendo las asociadas y no asociadas a vehículos.
 // Retorna una lista de ZoneRequest, agrupando los imeis de los vehículos asociados a cada zona.
-func (ma *zonasManager) GetZonesByEmpresaId(idParam string) ([]model.ZoneRequest, error) {
+func (ma *zonasManager) GetZonesWithImeisByEmpresaId(idParam string) ([]model.ZoneRequest, error) {
 	id, idParseErr := strconv.Atoi(idParam)
 	if idParseErr != nil {
 		return nil, idParseErr

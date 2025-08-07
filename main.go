@@ -19,9 +19,12 @@ func main() {
 	db.InitDB()
 	defer db.CloseDB()
 
-	_, closeFunc := messagingInfra.SetupRabbitMq()
-	defer closeFunc()
-	entry.NewRabbitMqDataEntry()
+	startRabbit := false
+	if startRabbit {
+		_, closeFunc := messagingInfra.SetupRabbitMq()
+		defer closeFunc()
+		entry.NewRabbitMqDataEntry()
+	}
 
 	e := echo.New()
 
@@ -33,6 +36,7 @@ func main() {
 	e.GET("/getLastLogByImei", api.GetLastLogByImei)
 	e.POST("/getVehiclesStateByImeis", api.GetVehiclesStateByImeis)
 	e.POST("/getRouteByImei", api.GetRouteByImei)
+	e.GET("/getSummaryRoutesAndZones", api.GetSummaryRoutesAndZones)
 
 	e.GET("/getZonesByEmpresaId", api.GetZonesByEmpresaId)
 	e.POST("/createZone", api.CreateZone)
@@ -45,7 +49,7 @@ func main() {
 func InitConfig() {
 	viper.SetConfigName("config.json")
 	viper.SetConfigType("json")
-	viper.AddConfigPath(".")
+	viper.AddConfigPath("./configs")
 	err := viper.ReadInConfig()
 	if err != nil {
 		panic(fmt.Errorf("Fatal error config file: %w \n", err))

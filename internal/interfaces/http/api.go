@@ -1,8 +1,11 @@
 package server
 
 import (
+	"encoding/csv"
+	"fmt"
 	"net/http"
 
+	"github.com/Fonzeca/Trackin/internal/core"
 	manager "github.com/Fonzeca/Trackin/internal/core/managers"
 	"github.com/Fonzeca/Trackin/internal/infrastructure/database/model"
 	"github.com/labstack/echo/v4"
@@ -93,7 +96,7 @@ func (api *api) GetZonesByEmpresaId(c echo.Context) error {
 	val, _ := c.FormParams()
 	id := val.Get("id")
 
-	zones, zoneErr := api.container.GetZonasManager().GetZonesByEmpresaId(id)
+	zones, zoneErr := api.container.GetZonasManager().GetZonesWithImeisByEmpresaId(id)
 
 	if zoneErr != nil {
 		return c.JSON(http.StatusNotFound, zoneErr.Error())
@@ -142,4 +145,37 @@ func (api *api) DeleteZoneById(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusOK)
+}
+
+func (api *api) GetSummaryRoutesAndZones(c echo.Context) error {
+	data := model.SummaryRequest{}
+	c.Bind(&data)
+
+	intersections, err := api.container.GetRoutesManager().GetSummaryRoutesAndZones(&data)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	records, err := core.MapIntersectionsToCSV(intersections)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, "Error generating CSV: "+err.Error())
+	}
+
+	filename := fmt.Sprintf("summary_%s.csv", data.Imei)
+
+	// Set headers for CSV download
+	c.Response().Header().Set("Content-Type", "text/csv")
+	c.Response().Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+
+	// Create a new CSV writer
+	writer := csv.NewWriter(c.Response().Writer)
+	defer writer.Flush() // Ensure all data is written
+
+	// Write data to the CSV
+	if err := writer.WriteAll(records); err != nil {
+		return c.String(http.StatusInternalServerError, "Error writing CSV: "+err.Error())
+	}
+
+	return nil // No explicit response body needed as data is written directly to writer
 }

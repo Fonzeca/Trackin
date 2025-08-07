@@ -94,3 +94,15 @@ type GpsRouteData struct {
 	Km       int32      `json:"km,omitempty"`
 	Data     []GpsPoint `json:"data,omitempty"`
 }
+
+type SummaryRequest struct {
+	Imei      string `json:"imei"`
+	FromDate  int64  `json:"fromDate"`
+	ToDate    int64  `json:"toDate"`
+	EmpresaId int32  `json:"empresa_id,omitempty"`
+}
+
+type PointIntersection struct {
+	Log   *Log
+	Zones []*Zona
+}

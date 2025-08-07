@@ -42,7 +42,7 @@ func IsValidPoint(current, next *model.Log) bool {
 }
 
 // ParseZoneToLoop converts a single zone into an S2 loop
-func ParseZoneToLoop(zone model.ZoneView) (*s2.Loop, error) {
+func ParseZoneToLoop(zone model.Zona) (*s2.Loop, error) {
 	if zone.Puntos == "" {
 		return nil, fmt.Errorf("zone has no points")
 	}
@@ -72,7 +72,7 @@ func ParseZoneToLoop(zone model.ZoneView) (*s2.Loop, error) {
 }
 
 // ParseZonesToLoops converts an array of zones into an array of S2 loops
-func ParseZonesToLoops(zones []model.ZoneView) ([]*s2.Loop, error) {
+func ParseZonesToLoops(zones []model.Zona) ([]*s2.Loop, error) {
 	if len(zones) == 0 {
 		return nil, fmt.Errorf("no zones provided")
 	}
@@ -96,7 +96,7 @@ func ParseZonesToLoops(zones []model.ZoneView) ([]*s2.Loop, error) {
 }
 
 // ParseZonesToPolygon converts an array of zones into a unified S2 polygon
-func ParseZonesToPolygon(zones []model.ZoneView) (*s2.Polygon, error) {
+func ParseZonesToPolygon(zones []model.Zona) (*s2.Polygon, error) {
 	loops, err := ParseZonesToLoops(zones)
 	if err != nil {
 		return nil, err
@@ -129,4 +129,33 @@ func getPointFromString(pointStr string) (*s2.Point, error) {
 	point := s2.PointFromLatLng(latLng)
 
 	return &point, nil
+}
+
+func IntersectLogsAndZones(logs []model.Log, zoneMap map[int32]*model.Zona, loopMap map[int32]*s2.Loop) ([]*model.PointIntersection, error) {
+	if len(logs) == 0 || len(zoneMap) == 0 || len(loopMap) == 0 {
+		return nil, fmt.Errorf("logs, zones or loops cannot be empty")
+	}
+
+	var intersections []*model.PointIntersection
+
+	for _, logGeo := range logs {
+		logGeoRef := logGeo // Create a copy to avoid referencing the loop variable
+		intersec := &model.PointIntersection{
+			Log:   &logGeoRef,
+			Zones: make([]*model.Zona, 0),
+		}
+
+		for zoneId, loop := range loopMap {
+			if loop.ContainsPoint(s2.PointFromLatLng(s2.LatLngFromDegrees(logGeo.Latitud, logGeo.Longitud))) {
+				if zone, exists := zoneMap[zoneId]; exists {
+					intersec.Zones = append(intersec.Zones, zone)
+				}
+			}
+		}
+
+		// Add intersection to array (even if it has no zones)
+		intersections = append(intersections, intersec)
+	}
+
+	return intersections, nil
 }

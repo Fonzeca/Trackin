@@ -20,7 +20,7 @@ import (
 // interface
 type PointIntersection struct {
 	log   *model.Log
-	zones []*model.ZoneRequest
+	zones []*model.Zona
 }
 
 func main() {
@@ -75,7 +75,7 @@ func main() {
 
 	// Get zones
 	zonesManager := manager.GetManagerContainer().GetZonasManager()
-	zones, err := zonesManager.GetZonesByEmpresaId("971") // Assuming "971" is the company ID
+	zones, err := zonesManager.GetZonesByEmpresaId(971) // Assuming "971" is the company ID
 
 	if err != nil {
 		log.Fatalf("Error getting zones: %v", err)
@@ -87,32 +87,21 @@ func main() {
 	}
 
 	// Map zone ID to zone request
-	zoneMap := make(map[int32]*model.ZoneRequest)
+	zoneMap := make(map[int32]*model.Zona)
 	for _, zone := range zones {
-		zoneMap[zone.Id] = &zone
+		zoneMap[zone.ID] = &zone
 	}
 
 	// Map zone ID to S2 loop
 	loopMap := make(map[int32]*s2.Loop)
 	for _, zone := range zones {
-		zoneView := model.ZoneView{
-			Id:              zone.Id,
-			EmpresaId:       zone.EmpresaId,
-			ColorLinea:      zone.ColorLinea,
-			ColorRelleno:    zone.ColorRelleno,
-			Puntos:          zone.Puntos,
-			Nombre:          zone.Nombre,
-			AvisarEntrada:   zone.AvisarEntrada,
-			AvisarSalida:    zone.AvisarSalida,
-			VelocidadMaxima: zone.VelocidadMaxima,
-		}
 
-		loop, err := geolocation.ParseZoneToLoop(zoneView)
+		loop, err := geolocation.ParseZoneToLoop(zone)
 		if err != nil {
-			log.Printf("Error creating loop for zone %d: %v", zone.Id, err)
+			log.Printf("Error creating loop for zone %d: %v", zone.ID, err)
 			continue
 		}
-		loopMap[zone.Id] = loop
+		loopMap[zone.ID] = loop
 	}
 
 	// Intersect logs with zones
@@ -222,7 +211,7 @@ func getGPSLogs(imei string, startDate, endDate time.Time) ([]model.Log, error) 
 }
 
 // getZoneNames extracts zone names and concatenates them with semicolon
-func getZoneNames(zones []*model.ZoneRequest) string {
+func getZoneNames(zones []*model.Zona) string {
 	if len(zones) == 0 {
 		return ""
 	}
@@ -241,7 +230,7 @@ func getZoneNames(zones []*model.ZoneRequest) string {
 }
 
 // getMinSpeedLimit finds the lowest speed limit among the zones
-func getMinSpeedLimit(zones []*model.ZoneRequest) float64 {
+func getMinSpeedLimit(zones []*model.Zona) float64 {
 	minSpeedLimit := -1.0 // -1 indicates no limit
 
 	for _, zone := range zones {
@@ -327,7 +316,7 @@ func exportToCSV(intersections []PointIntersection, filename string) error {
 	return nil
 }
 
-func intersectLogsAndZones(logs []model.Log, zoneMap map[int32]*model.ZoneRequest, loopMap map[int32]*s2.Loop) ([]PointIntersection, error) {
+func intersectLogsAndZones(logs []model.Log, zoneMap map[int32]*model.Zona, loopMap map[int32]*s2.Loop) ([]PointIntersection, error) {
 	if len(logs) == 0 || len(zoneMap) == 0 || len(loopMap) == 0 {
 		return nil, fmt.Errorf("logs, zones or loops cannot be empty")
 	}
@@ -337,7 +326,7 @@ func intersectLogsAndZones(logs []model.Log, zoneMap map[int32]*model.ZoneReques
 	for _, log := range logs {
 		intersec := PointIntersection{
 			log:   &log,
-			zones: make([]*model.ZoneRequest, 0),
+			zones: make([]*model.Zona, 0),
 		}
 
 		for zoneId, loop := range loopMap {

@@ -11,6 +11,8 @@ type IRoutesManager interface {
 	GetRouteByImei(requestRoute model.RouteRequest) ([]model.GpsRouteData, error)
 	GetRouteByImeiAndZones(requestRoute model.RouteRequest, zones []model.ZoneView) ([]model.GpsRouteData, error)
 	CleanUpRouteBySpeedAnomaly(route []model.GpsPoint) []model.GpsPoint
+	GetLogsFromImeiAndDate(request *model.SummaryRequest) ([]model.Log, error)
+	GetSummaryRoutesAndZones(request *model.SummaryRequest) ([]*model.PointIntersection, error)
 
 	// Setter para inyección de dependencias
 	SetZonasManager(zonasManager IZonasManager)

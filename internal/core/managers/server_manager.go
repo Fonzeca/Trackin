@@ -1,12 +1,16 @@
 package manager
 
 import (
+	"errors"
 	"log"
 	"math"
+	"time"
 
 	"github.com/Fonzeca/Trackin/internal/core/services"
 	db "github.com/Fonzeca/Trackin/internal/infrastructure/database"
 	"github.com/Fonzeca/Trackin/internal/infrastructure/database/model"
+	"github.com/Fonzeca/Trackin/internal/infrastructure/geolocation"
+	"github.com/golang/geo/s2"
 )
 
 type routesManager struct {
@@ -191,6 +195,95 @@ func (ma *routesManager) GetRouteByImei(requestRoute model.RouteRequest) ([]mode
 	}
 	ma.id = 0
 	return routes, tx.Error
+}
+
+func (ma *routesManager) GetSummaryRoutesAndZones(request *model.SummaryRequest) ([]*model.PointIntersection, error) {
+
+	if request.FromDate == 0 || request.ToDate == 0 || request.Imei == "" || request.EmpresaId == 0 {
+		return nil, errors.New("not valid request")
+	}
+
+	logs, err := ma.GetLogsFromImeiAndDate(request)
+	if err != nil {
+		log.Println("Error getting logs:", err)
+		return nil, err
+	}
+
+	if len(logs) == 0 {
+		log.Println("No logs found for IMEI:", request.Imei)
+		return nil, errors.New("no logs found")
+	}
+
+	zones, err := ma.zonasManager.GetZonesByEmpresaId(request.EmpresaId)
+	if err != nil {
+		log.Println("Error getting zones:", err)
+		return nil, err
+	}
+
+	log.Printf("Intersecting %d logs with %d zones", len(logs), len(zones))
+
+	// Map zone ID to S2 loop
+	loopMap := make(map[int32]*s2.Loop)
+	for _, zone := range zones {
+		loop, err := geolocation.ParseZoneToLoop(zone)
+		if err != nil {
+			log.Printf("Error creating loop for zone %d: %v", zone.ID, err)
+			continue
+		}
+		loopMap[zone.ID] = loop
+	}
+
+	zoneMap := make(map[int32]*model.Zona)
+	for _, zone := range zones {
+		z := zone // Make a copy to avoid referencing the loop variable
+		zoneMap[zone.ID] = &z
+	}
+
+	// Intersect logs with zones
+	intersections, err := geolocation.IntersectLogsAndZones(logs, zoneMap, loopMap)
+	if err != nil {
+		log.Printf("Error intersecting logs with zones: %v", err)
+	}
+
+	return intersections, nil
+}
+
+func (ma *routesManager) GetLogsFromImeiAndDate(request *model.SummaryRequest) ([]model.Log, error) {
+	logs := []model.Log{}
+
+	if request.FromDate == 0 || request.ToDate == 0 || request.Imei == "" || request.EmpresaId == 0 {
+		return nil, errors.New("not valid request")
+	}
+	FromDateTime := time.UnixMilli(request.FromDate)
+	ToDateTime := time.UnixMilli(request.ToDate)
+
+	tx := db.DB.Select("imei", "date", "latitud", "longitud", "speed", "mileage", "engine_status", "azimuth").
+		Where("imei = ? AND date BETWEEN ? AND ?", request.Imei, FromDateTime, ToDateTime).
+		Order("date ASC").
+		Find(&logs)
+
+	if tx.Error != nil {
+		log.Println("Error getting logs:", tx.Error)
+		return nil, tx.Error
+	}
+
+	if len(logs) == 0 {
+		log.Println("No logs found for IMEI:", request.Imei)
+		return nil, errors.New("no logs found")
+	}
+
+	//filter logs when the car is stopped but keep only the first log of the stop
+	filtered := logs[:1] // Always keep the first log
+	for i := 1; i < len(logs); i++ {
+		currentLog := logs[i]
+		previousLog := logs[i-1]
+		if !(!currentLog.EngineStatus && !previousLog.EngineStatus && currentLog.Latitud == previousLog.Latitud && currentLog.Longitud == previousLog.Longitud) {
+			filtered = append(filtered, logs[i])
+		}
+	}
+	logs = filtered
+
+	return logs, nil
 }
 
 func saveStopLog(index int, fromDate string, fromHour string, id int32, routes *[]model.GpsRouteData, logs *[]model.Log) {
