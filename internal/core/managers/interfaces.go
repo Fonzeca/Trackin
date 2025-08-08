@@ -7,7 +7,7 @@ import (
 // IRoutesManager define la interfaz para el manager de rutas
 type IRoutesManager interface {
 	GetLastLogByImei(imei string) (model.LastLogView, error)
-	GetVehiclesStateByImeis(only string, imeis model.ImeisBody) ([]model.StateLogView, error)
+	GetVehiclesStateByImeis(imeis model.ImeisBody) ([]model.StateLogView, error)
 	GetRouteByImei(requestRoute model.RouteRequest) ([]model.GpsRouteData, error)
 	GetRouteByImeiAndZones(requestRoute model.RouteRequest, zones []model.ZoneView) ([]model.GpsRouteData, error)
 	CleanUpRouteBySpeedAnomaly(route []model.GpsPoint) []model.GpsPoint

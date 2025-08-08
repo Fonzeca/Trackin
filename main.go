@@ -19,7 +19,7 @@ func main() {
 	db.InitDB()
 	defer db.CloseDB()
 
-	startRabbit := false
+	startRabbit := true
 	if startRabbit {
 		_, closeFunc := messagingInfra.SetupRabbitMq()
 		defer closeFunc()

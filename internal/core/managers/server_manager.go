@@ -70,12 +70,12 @@ func (ma *routesManager) GetLastLogByImei(imei string) (model.LastLogView, error
 	return lastLog, nil
 }
 
-func (ma *routesManager) GetVehiclesStateByImeis(only string, imeis model.ImeisBody) ([]model.StateLogView, error) {
+func (ma *routesManager) GetVehiclesStateByImeis(imeis model.ImeisBody) ([]model.StateLogView, error) {
 	logs := []model.Log{}
 	for _, imei := range imeis.Imeis {
 		// Usamos la nueva función con lock para evitar consultas duplicadas
 		log, wasInCache := services.GetCachedPointsWithLock(imei, func() *model.Log {
-			return queryLogFromDB(imei, only)
+			return queryLogFromDB(imei)
 		})
 
 		if log != nil {
@@ -315,13 +315,10 @@ func saveMovingLog(index int, fromDate string, fromHour string, id int32, routes
 }
 
 // queryLogFromDB ejecuta la consulta a la base de datos para obtener el último log
-func queryLogFromDB(imei, only string) *model.Log {
+func queryLogFromDB(imei string) *model.Log {
 	log := &model.Log{}
-	if only != "" {
-		db.DB.Select("imei", only, "date").Where("imei = ?", imei).Order("date DESC").First(log)
-	} else {
-		db.DB.Select("imei", "latitud", "longitud", "engine_status", "azimuth", "date").Where("imei = ?", imei).Order("date DESC").First(log)
-	}
+	db.DB.Raw("SELECT imei, latitud, longitud, engine_status, azimuth, date FROM log WHERE imei = ? ORDER BY date DESC LIMIT 1", imei).
+		Scan(log)
 
 	// Si no se encontró nada, retornamos nil
 	if log.Imei == "" {
