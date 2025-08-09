@@ -80,17 +80,44 @@ func (cm *CacheManager) worker() {
 			switch req.operation {
 			case opGet:
 				value, exists := cm.cache[req.key]
+				fmt.Printf("[CACHE] GET IMEI %s: exists=%t, value_date=%s\n",
+					req.key, exists,
+					func() string {
+						if value != nil {
+							return value.Date.Format("2006-01-02 15:04:05")
+						}
+						return "nil"
+					}())
 				req.response <- cacheResponse{
 					value: value,
 					found: exists,
 				}
 			case opSet:
 				// Solo actualizar si es más reciente o no existe
-				if existing, exists := cm.cache[req.key]; !exists || existing == nil {
-					cm.cache[req.key] = req.value
+				existing, exists := cm.cache[req.key]
+				shouldUpdate := false
+
+				if !exists || existing == nil {
+					shouldUpdate = true
+					fmt.Printf("[CACHE] SET IMEI %s: No existe en cache, creando nuevo - Date: %s\n",
+						req.key, req.value.Date.Format("2006-01-02 15:04:05"))
 				} else if req.value != nil && existing.Date.Before(req.value.Date) {
+					shouldUpdate = true
+					fmt.Printf("[CACHE] SET IMEI %s: Actualizando cache - Old: %s -> New: %s\n",
+						req.key,
+						existing.Date.Format("2006-01-02 15:04:05"),
+						req.value.Date.Format("2006-01-02 15:04:05"))
+				} else {
+					fmt.Printf("[CACHE] SET IMEI %s: NO actualizando cache - Existing: %s >= New: %s\n",
+						req.key,
+						existing.Date.Format("2006-01-02 15:04:05"),
+						req.value.Date.Format("2006-01-02 15:04:05"))
+				}
+
+				if shouldUpdate {
 					cm.cache[req.key] = req.value
 				}
+
 				req.response <- cacheResponse{found: true}
 			case opGetBatch:
 				values := make(map[string]*model.Log)
@@ -106,16 +133,23 @@ func (cm *CacheManager) worker() {
 			case opGetOrQuery:
 				// Verificar primero si está en caché
 				if value, exists := cm.cache[req.key]; exists && value != nil {
+					fmt.Printf("[CACHE] GET_OR_QUERY IMEI %s: Encontrado en cache - Date: %s\n",
+						req.key, value.Date.Format("2006-01-02 15:04:05"))
 					req.response <- cacheResponse{
 						value: value,
 						found: true,
 					}
 				} else {
+					fmt.Printf("[CACHE] GET_OR_QUERY IMEI %s: NO encontrado en cache, ejecutando query\n", req.key)
 					// No está en caché, ejecutar la consulta
 					result := req.queryFunc()
 					if result != nil {
+						fmt.Printf("[CACHE] GET_OR_QUERY IMEI %s: Query retornó resultado - Date: %s, guardando en cache\n",
+							req.key, result.Date.Format("2006-01-02 15:04:05"))
 						// Guardar en caché
 						cm.cache[req.key] = result
+					} else {
+						fmt.Printf("[CACHE] GET_OR_QUERY IMEI %s: Query retornó nil\n", req.key)
 					}
 					req.response <- cacheResponse{
 						value: result,

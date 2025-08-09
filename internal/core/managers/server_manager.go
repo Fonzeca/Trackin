@@ -2,6 +2,7 @@ package manager
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"math"
 	"time"
@@ -66,16 +67,31 @@ func (ma *routesManager) GetLastLogByImei(imei string) (model.LastLogView, error
 }
 
 func (ma *routesManager) GetVehiclesStateByImeis(imeis model.ImeisBody) ([]model.StateLogView, error) {
+	fmt.Printf("[API] GetVehiclesStateByImeis llamado con %d IMEIs: %v\n", len(imeis.Imeis), imeis.Imeis)
+
 	logs := []model.Log{}
-	for _, imei := range imeis.Imeis {
+	for i, imei := range imeis.Imeis {
+		fmt.Printf("[API] Procesando IMEI %d/%d: %s\n", i+1, len(imeis.Imeis), imei)
+
 		// El cache manager se encarga automáticamente del caching y evita consultas duplicadas
-		log, _ := services.GetCachedPointsWithQuery(imei, func() *model.Log {
-			return queryLogFromDB(imei)
+		log, found := services.GetCachedPointsWithQuery(imei, func() *model.Log {
+			fmt.Printf("[API] IMEI %s: Ejecutando queryLogFromDB\n", imei)
+			result := queryLogFromDB(imei)
+			if result != nil {
+				fmt.Printf("[API] IMEI %s: queryLogFromDB retornó - Date: %s\n",
+					imei, result.Date.Format("2006-01-02 15:04:05"))
+			} else {
+				fmt.Printf("[API] IMEI %s: queryLogFromDB retornó nil\n", imei)
+			}
+			return result
 		})
 
 		if log != nil {
+			fmt.Printf("[API] IMEI %s: Usando log - Date: %s, found_in_cache=%t\n",
+				imei, log.Date.Format("2006-01-02 15:04:05"), found)
 			logs = append(logs, *log)
 		} else {
+			fmt.Printf("[API] IMEI %s: No se encontró log, agregando log vacío\n", imei)
 			// Si no se encontró nada, agregamos un log vacío
 			logs = append(logs, model.Log{Imei: imei})
 		}
@@ -306,14 +322,25 @@ func saveMovingLog(index int, fromDate string, fromHour string, id int32, routes
 
 // queryLogFromDB ejecuta la consulta a la base de datos para obtener el último log
 func queryLogFromDB(imei string) *model.Log {
+	fmt.Printf("[DB] IMEI %s: Ejecutando consulta SQL a base de datos\n", imei)
+
 	log := &model.Log{}
-	db.DB.Raw("SELECT imei, latitud, longitud, engine_status, azimuth, date FROM log WHERE imei = ? ORDER BY date DESC LIMIT 1", imei).
+	result := db.DB.Raw("SELECT imei, latitud, longitud, engine_status, azimuth, date FROM log WHERE imei = ? ORDER BY date DESC LIMIT 1", imei).
 		Scan(log)
+
+	if result.Error != nil {
+		fmt.Printf("[DB] ERROR IMEI %s: Error en consulta SQL: %v\n", imei, result.Error)
+		return nil
+	}
 
 	// Si no se encontró nada, retornamos nil
 	if log.Imei == "" {
+		fmt.Printf("[DB] IMEI %s: No se encontraron registros en la base de datos\n", imei)
 		return nil
 	}
+
+	fmt.Printf("[DB] IMEI %s: Encontrado en DB - Date: %s, Lat: %f, Lng: %f\n",
+		imei, log.Date.Format("2006-01-02 15:04:05"), log.Latitud, log.Longitud)
 
 	return log
 }
