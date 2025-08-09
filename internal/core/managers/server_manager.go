@@ -34,8 +34,8 @@ func (ma *routesManager) getId() int32 {
 }
 
 func (ma *routesManager) GetLastLogByImei(imei string) (model.LastLogView, error) {
-	// Usamos la nueva función con lock para evitar consultas duplicadas
-	log, wasInCache := services.GetCachedPointsWithLock(imei, func() *model.Log {
+	// El cache manager se encarga automáticamente del caching y evita consultas duplicadas
+	log, _ := services.GetCachedPointsWithQuery(imei, func() *model.Log {
 		logResult := &model.Log{}
 		db.DB.Select("imei", "latitud", "longitud", "speed", "date").Order("date desc").Where("imei = ?", imei).First(logResult)
 
@@ -44,11 +44,6 @@ func (ma *routesManager) GetLastLogByImei(imei string) (model.LastLogView, error
 		}
 		return logResult
 	})
-
-	// Solo actualizamos el caché en segundo plano si no estaba previamente cacheado
-	if !wasInCache && log != nil {
-		services.SetCachedPoints(imei, log)
-	}
 
 	var lastLog model.LastLogView
 	if log != nil {
@@ -73,8 +68,8 @@ func (ma *routesManager) GetLastLogByImei(imei string) (model.LastLogView, error
 func (ma *routesManager) GetVehiclesStateByImeis(imeis model.ImeisBody) ([]model.StateLogView, error) {
 	logs := []model.Log{}
 	for _, imei := range imeis.Imeis {
-		// Usamos la nueva función con lock para evitar consultas duplicadas
-		log, wasInCache := services.GetCachedPointsWithLock(imei, func() *model.Log {
+		// El cache manager se encarga automáticamente del caching y evita consultas duplicadas
+		log, _ := services.GetCachedPointsWithQuery(imei, func() *model.Log {
 			return queryLogFromDB(imei)
 		})
 
@@ -83,11 +78,6 @@ func (ma *routesManager) GetVehiclesStateByImeis(imeis model.ImeisBody) ([]model
 		} else {
 			// Si no se encontró nada, agregamos un log vacío
 			logs = append(logs, model.Log{Imei: imei})
-		}
-
-		// Solo actualizamos el caché en segundo plano si no estaba previamente cacheado
-		if !wasInCache && log != nil {
-			go services.SetCachedPoints(imei, log)
 		}
 	}
 

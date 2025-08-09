@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/Fonzeca/Trackin/internal/core/services"
 	db "github.com/Fonzeca/Trackin/internal/infrastructure/database"
 	messagingInfra "github.com/Fonzeca/Trackin/internal/infrastructure/messaging"
 	server "github.com/Fonzeca/Trackin/internal/interfaces/http"
@@ -15,9 +16,15 @@ import (
 func main() {
 	InitConfig()
 
+	// Inicializar el cache manager
+	services.InitCacheManager()
+
 	// go monitor.System()
 	db.InitDB()
 	defer db.CloseDB()
+
+	// Detener el cache manager al salir
+	defer services.StopCacheManager()
 
 	startRabbit := true
 	if startRabbit {
@@ -36,7 +43,7 @@ func main() {
 	e.GET("/getLastLogByImei", api.GetLastLogByImei)
 	e.POST("/getVehiclesStateByImeis", api.GetVehiclesStateByImeis)
 	e.POST("/getRouteByImei", api.GetRouteByImei)
-	e.GET("/getSummaryRoutesAndZones", api.GetSummaryRoutesAndZones)
+	e.POST("/getSummaryRoutesAndZones", api.GetSummaryRoutesAndZones)
 
 	e.GET("/getZonesByEmpresaId", api.GetZonesByEmpresaId)
 	e.POST("/createZone", api.CreateZone)
