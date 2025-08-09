@@ -16,26 +16,11 @@ const earthRadiusKm = 6371.01 // Average radius of the Earth in km
 // It ensures that the current log's date is before the next log's date, calculates the distance between the two points,
 // and checks if the speed is within the defined threshold.
 func IsValidPoint(current, next *model.Log) bool {
-	if current == nil {
-		fmt.Printf("[VALIDATION] current log is nil, returning false\n")
+	if current == nil || next == nil {
 		return false
 	}
-
-	if next == nil {
-		fmt.Printf("[VALIDATION] next log is nil, returning false\n")
-		return false
-	}
-
-	fmt.Printf("[VALIDATION] IMEI %s: Validating transition - Current: %s -> Next: %s\n",
-		next.Imei,
-		current.Date.Format("2006-01-02 15:04:05"),
-		next.Date.Format("2006-01-02 15:04:05"))
 
 	if current.Date.After(next.Date) {
-		fmt.Printf("[VALIDATION] IMEI %s: INVALID - Current date (%s) is after next date (%s)\n",
-			next.Imei,
-			current.Date.Format("2006-01-02 15:04:05"),
-			next.Date.Format("2006-01-02 15:04:05"))
 		return false // Ensure the current date is before the next date
 	}
 
@@ -47,11 +32,7 @@ func IsValidPoint(current, next *model.Log) bool {
 	// Calculate the time difference in hours
 	timeDifference := next.Date.Sub(current.Date).Hours()
 
-	fmt.Printf("[VALIDATION] IMEI %s: Distance: %.2f km, Time diff: %.2f hours\n",
-		next.Imei, distance, timeDifference)
-
 	if timeDifference == 0 {
-		fmt.Printf("[VALIDATION] IMEI %s: INVALID - Time difference is zero\n", next.Imei)
 		return false // Avoid division by zero if the time difference is zero
 	}
 
@@ -60,23 +41,14 @@ func IsValidPoint(current, next *model.Log) bool {
 
 	if distance <= minDistanceThresholdKm {
 		if timeDifference*60 >= minTimeThresholdMinutes {
-			fmt.Printf("[VALIDATION] IMEI %s: Very small distance (%.2f km) but acceptable time difference (%.2f min), vehicle likely stationary\n",
-				next.Imei, distance, timeDifference*60)
 			return true
 		}
-
-		fmt.Printf("[VALIDATION] IMEI %s: INVALID - Very small distance (%.2f km) and time difference (%.2f min) too small\n",
-			next.Imei, distance, timeDifference*60)
 		return false
 	}
 
 	speed := distance / timeDifference
 
-	isValid := speed <= thresholdKmh
-	fmt.Printf("[VALIDATION] IMEI %s: Calculated speed: %.2f km/h, Threshold: %.2f km/h, Valid: %t\n",
-		next.Imei, speed, thresholdKmh, isValid)
-
-	return isValid
+	return speed <= thresholdKmh
 }
 
 // ParseZoneToLoop converts a single zone into an S2 loop
@@ -91,8 +63,7 @@ func ParseZoneToLoop(zone model.Zona) (*s2.Loop, error) {
 	for _, pointStr := range pointsStr {
 		point, err := getPointFromString(pointStr)
 		if err != nil {
-			// Log the error and continue to the next point
-			fmt.Printf("Error parsing point '%s': %v\n", pointStr, err)
+			// Skip invalid points and continue to the next point
 			continue
 		}
 		points = append(points, *point)
