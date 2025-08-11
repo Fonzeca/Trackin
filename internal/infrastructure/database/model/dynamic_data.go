@@ -1,6 +1,8 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 type Location struct {
 	Latitutd float64 `json:"latitud,omitempty"`
