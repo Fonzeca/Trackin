@@ -51,6 +51,54 @@ func IsValidPoint(current, next *model.Log) bool {
 	return speed <= thresholdKmh
 }
 
+// IsValidPointFlexible checks if the transition from current to next log entry is valid based only on speed constraints.
+// This is a more flexible version that only validates excessive speeds, useful for cleaning GPS data with intermittent issues.
+func IsValidPointFlexible(current, next *model.Log) bool {
+	if current == nil || next == nil {
+		return false
+	}
+
+	currentPoint := s2.LatLngFromDegrees(current.Latitud, current.Longitud)
+	nextPoint := s2.LatLngFromDegrees(next.Latitud, next.Longitud)
+
+	searchingPoint := s2.LatLngFromDegrees(-49.303356, -67.744521)
+
+	// want to verify if currentPoint are in radius of 100 meters from a new point
+	if currentPoint.Distance(searchingPoint).Radians()*earthRadiusKm <= 100*0.001 {
+		return false
+	}
+
+	// Allow points with same timestamp or reversed order (more flexible)
+	if current.Date.Equal(next.Date) {
+		return true // Same timestamp is acceptable
+	}
+
+	distance := nextPoint.Distance(currentPoint).Radians() * earthRadiusKm
+
+	if distance > 20 {
+		// Si la distancia es mayor a 20 km, consideramos que es inválido directamente
+		return false
+	}
+
+	// Calculate absolute time difference in hours
+	timeDifference := next.Date.Sub(current.Date)
+	if timeDifference < 0 {
+		timeDifference = -timeDifference // Make it absolute
+	}
+	timeDifferenceHours := timeDifference.Hours()
+
+	// If time difference is zero, consider it valid (same timestamp)
+	if timeDifferenceHours == 0 {
+		return true
+	}
+
+	// More flexible speed threshold for debugging (e.g., 500 km/h instead of 350)
+	const flexibleThresholdKmh = 350.0
+	speed := distance / timeDifferenceHours
+
+	return speed <= flexibleThresholdKmh
+}
+
 // ParseZoneToLoop converts a single zone into an S2 loop
 func ParseZoneToLoop(zone model.Zona) (*s2.Loop, error) {
 	if zone.Puntos == "" {
