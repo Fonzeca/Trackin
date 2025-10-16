@@ -68,9 +68,10 @@ func (ma *routesManager) GetLastLogByImei(imei string) (model.LastLogView, error
 func (ma *routesManager) GetVehiclesStateByImeis(imeis model.ImeisBody) ([]model.StateLogView, error) {
 	logs := []model.Log{}
 	for _, imei := range imeis.Imeis {
+		imeiCopy := imei // Crear una copia para evitar problemas de cierre
 		// El cache manager se encarga automáticamente del caching y evita consultas duplicadas
-		log, _ := services.GetCachedPointsWithQuery(imei, func() *model.Log {
-			return queryLogFromDB(imei)
+		log, _ := services.GetCachedPointsWithQuery(imeiCopy, func() *model.Log {
+			return queryLogFromDB(imeiCopy)
 		})
 
 		if log != nil {
